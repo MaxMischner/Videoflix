@@ -14,8 +14,7 @@ venv/
 # Local database
 /db.sqlite3
 
-# Local frontend clone (separate repository)
-/project.Videoflix/
+
 
 # Generated media/upload artifacts
 /media/
