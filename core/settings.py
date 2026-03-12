@@ -199,6 +199,11 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", default="True").lower() == "true"
 EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", default="False").lower() == "true"
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND",
+    default="django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", default=20))
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER)
 
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", default="http://127.0.0.1:8000")

@@ -37,6 +37,7 @@ class RegisterEndpointTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         activation_mail = mail.outbox[0]
         self.assertIn(self.valid_payload["email"], activation_mail.to)
+        self.assertTrue(activation_mail.alternatives)
 
         first_link = activation_mail.body.strip().splitlines()[-1]
         parsed_link = urlparse(first_link)
