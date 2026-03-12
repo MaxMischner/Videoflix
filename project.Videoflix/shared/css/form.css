@@ -1,0 +1,300 @@
+.std_form {
+    border-radius: var(--form-rad);
+    border: var(--form-border);
+    background-color: var(--form-bg-color);
+    padding: var(--form-pad);
+    max-width: var(--form-max-w);
+    height: fit-content;
+    margin: auto;
+    width: 100%;
+}
+
+.std_form_small {
+    border-radius: var(--form-rad);
+    border: var(--form-border);
+    background-color: var(--form-bg-color);
+    padding: var(--form-pad);
+    max-width: var(--form-s-max-w);
+}
+
+.form_group_w_icon_wo_label,
+.form_group_wo_icon_w_label input,
+.form_group_wo_icon_w_label textarea {
+    border-radius: var(--form-input-rad);
+    border: var(--form-input-border);
+    background-color: var(--form-input-bg-color);
+    padding: var(--form-input-pad);
+    display: flex;
+    gap: var(--form-input-pad);
+    align-items: center;
+    color: var(--font-prime-color)
+}
+
+textarea {
+    height: 200px;
+    resize: none;
+}
+
+.form_group_w_icon_wo_label>img,
+.password_eye {
+    width: 20px;
+    height: 20px;
+}
+
+.form_group_w_icon_wo_label {
+    position: relative;
+    margin-top: 16px;
+}
+
+.password_eye {
+    cursor: pointer;
+}
+
+.form_group_w_icon_wo_label input {
+    border: none;
+    outline: none;
+    width: 100%;
+    background-color: var(--form-input-bg-color);
+    color: var(--font-prime-color);
+}
+
+.error_label {
+    color: var(--form-input-error-border-color);
+    font-size: 16px !important;
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+.form_group_checkbox[error="true"] .error_label::before,
+.form_group_w_icon_wo_label[error="true"] .error_label::before,
+.form_group_wo_icon_w_label[error="true"] .error_label::before {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background-image: url("/assets/img/warning.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    flex-shrink: 0;
+}
+
+
+.form_group_checkbox .error_label {
+    display: block;
+    height: 20px;
+    line-height: 20px;
+    margin-top: 8px;
+    margin-bottom: 0;
+    color: transparent;
+    font-size: 16px !important;
+    overflow: hidden;
+}
+
+.form_group_checkbox[error="true"] .error_label {
+    color: var(--form-input-error-border-color);
+    display: flex;
+    align-items: center;
+    height: auto;
+}
+
+.form_group_w_icon_wo_label .error_label {
+    position: absolute;
+    font-size: 16px;
+    bottom: 0;
+    transform: translate(0px, 100%);
+    width: calc(100%);
+    margin-top: 4px;
+}
+
+.form_group_w_icon_wo_label[error="true"] .error_label {
+    display: flex;
+}
+
+.form_group_wo_icon_w_label .error_label {
+    color: transparent;
+    display: block;
+}
+
+.form_group_w_icon_wo_label[error="true"],
+.form_group_wo_icon_w_label[error="true"] > input {
+    border-color: var(--form-input-error-border-color);
+}
+
+.form_group_wo_icon_w_label[error="true"] .error_label {
+    color: var(--form-input-error-border-color);
+    display: flex;
+}
+
+
+@media screen and (max-width: 768px) {
+    .form_group_w_icon_wo_label[error="true"] {
+        margin-bottom: 20px;
+        font-size: 16px;
+    }
+
+    .form_group_checkbox .error_label {
+        margin-top: 6px;
+        gap: 6px;
+    }
+
+    .form_group_checkbox[error="true"] .error_label::before,
+    .form_group_w_icon_wo_label[error="true"] .error_label::before,
+    .form_group_wo_icon_w_label[error="true"] .error_label::before {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .form_group_w_icon_wo_label[error="true"] {
+        margin-bottom: 24px;
+    }
+
+    .form_group_checkbox .error_label {
+        gap: 4px;
+        font-size: 16px !important;
+    }
+
+    .form_group_checkbox[error="true"] .error_label::before,
+    .form_group_w_icon_wo_label[error="true"] .error_label::before,
+    .form_group_wo_icon_w_label[error="true"] .error_label::before {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+.form_group_wo_icon_w_label>label {
+    height: 20px;
+    color: var(--font-prime-color);
+    font-size: 16px;
+}
+
+.label_required::after {
+    content: " *";
+    color: var(--form-input-error-border-color);
+}
+
+.form_group_w_icon_wo_label label {
+    position: absolute;
+    height: 20px;
+    left: calc(20px + 14px + 14px);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    color: #999;
+    transition: 0.3s ease-in-out;
+    pointer-events: none;
+}
+
+.form_group_invite label {
+    left: 20px;
+}
+
+.form_group_w_icon_wo_label input:focus+label,
+.form_group_w_icon_wo_label input:valid+label {
+    top: -16px;
+    left: 0px;
+    color: var(--font-prime-color);
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:focus {
+    transition: background-color 600000s 0s, color 600000s 0s;
+}
+input[data-autocompleted] {
+    background-color: transparent !important;
+}
+
+.custom_checkbox input {
+    display: none;
+}
+
+.custom_checkbox {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--font-prime-color);
+}
+
+.custom_checkbox .checkbox_icon {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--btn-prime-color);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    background-color: transparent;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.custom_checkbox .checkbox_icon::after {
+    content: "";
+    width: 6px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    display: none;
+    margin-top: -2px;
+}
+
+.custom_checkbox input:checked + .checkbox_icon {
+    background-color: var(--btn-prime-color);
+    border-color: var(--btn-prime-color);
+}
+
+.custom_checkbox input:checked + .checkbox_icon::after {
+    display: block;
+}
+
+.custom_checkbox a {
+    color: var(--link-color);
+    text-decoration: underline;
+}
+
+.custom_checkbox a:hover {
+    text-decoration: none;
+}
+
+.custom_datepicker {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    border-radius: var(--form-input-rad);
+    border: var(--form-input-border);
+    background-color: var(--form-input-bg-color);
+}
+
+.custom_datepicker input {
+    z-index: 2;
+    width: 100%;
+    border: none;
+    background-color: transparent;
+    padding-right: 16px;
+    display: block;
+}
+
+.custom_datepicker input:active,
+.custom_datepicker input:focus {
+    border: none;
+    outline: none;
+}
+
+.custom_datepicker img {
+    position: absolute;
+    right: 16px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.custom_datepicker input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    cursor: pointer;
+}

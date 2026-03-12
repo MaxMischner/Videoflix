@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Videoflix - Account Activation</title>
+    <link rel="stylesheet" href="/shared/css/variables.css">
+    <link rel="stylesheet" href="/shared/css/standard.css">
+    <link rel="stylesheet" href="/shared/css/fonts.css">
+    <link rel="stylesheet" href="/shared/css/assets.css">
+    <link rel="stylesheet" href="/shared/css/form.css">
+    <link rel="stylesheet" href="/shared/css/header_footer.css">
+    <link rel="stylesheet" href="./auth.css">
+    <link rel="stylesheet" href="/shared/css/toast_msg.css">
+    <link rel="icon" href="/assets/icons/logo_icon_small.svg" type="image/svg+xml">
+
+    <script src="/shared/js/variables.js"></script>
+    <script src="/shared/js/config.js"></script>
+    <script src="/shared/js/ui_helper.js"></script>
+    <script src="/shared/js/api.js"></script>
+    <script src="/shared/js/auth.js"></script>
+    <script src="/shared/js/header.js"></script>
+</head>
+<body onload="setHeader(), initActivation()" class="img_bg signup_bg">
+<header class="main_header w_full">
+    <a href="/pages/auth/login.html">
+        <img src="/assets/icons/logo_icon_small.svg" alt="" srcset="">
+        <img src="/assets/icons/logo_icon.svg" alt="" srcset="">
+    </a>
+    <div id="head_content_right" class="d_flex_cc_gm head_content_right"></div>
+</header>
+<main class="w_full d_flex_cc_gl">
+    <div class="std_form d_flex_cs_gl f_d_c">
+        <div id="activation_content" class="d_flex_cs_gl f_d_c w_full">
+            <h1 class="font_prime_color d_flex_cs_gl w_full">Activating Account...</h1>
+            <div class="d_flex_cc_gl">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer class="main_footer w_full">
+    <nav class="d_flex_cc_gl w_full">
+        <a href="../privacy/index.html" class="link">Privacy Policy</a>
+        <a href="../imprint/index.html" class="link">Imprint</a>
+    </nav>
+</footer>
+</body>
+</html>

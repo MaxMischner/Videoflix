@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: shared/js/api.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: shared/js/api.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>
+/**
+ * Returns a user-friendly error message based on the caught error.
+ * @param {Error} error - The caught error object.
+ * @returns {string} Human-readable error message.
+ */
+function getErrorMessage(error) {
+    let errorMessage = 'Network error';
+    if (error instanceof TypeError) {
+        errorMessage = 'There was an issue with the request or network connection.';
+    } else if (error instanceof SyntaxError) {
+        errorMessage = 'Response was not valid JSON.';
+    } else if (error.message.includes('Failed to fetch')) {
+        errorMessage = 'Failed to connect to the server.';
+    }
+    return errorMessage;
+}
+
+/**
+ * Extracts form data and returns it as a plain object.
+ * @param {HTMLFormElement} form - The form element to extract data from.
+ * @returns {Object} Object containing form field values.
+ */
+function getFormData(form) {
+    const formData = new FormData(form);
+    return Object.fromEntries(formData.entries());
+}
+
+/**
+ * Sends a POST request to the API with JSON data and CSRF token (if available).
+ * @param {string} endpoint - API endpoint to call (relative to API_BASE_URL).
+ * @param {Object} data - Data to send in the request body.
+ * @returns {Promise&lt;{ok: boolean, status: number|string, data: any, message: string}>}
+ */
+async function postData(endpoint, data) {
+    let csrfToken = '';
+    const cookieString = document.cookie;
+
+    if (cookieString &amp;&amp; cookieString.includes('csrftoken=')) {
+        const csrfCookie = cookieString.split('csrftoken=')[1];
+        if (csrfCookie) {
+            csrfToken = csrfCookie.split(';')[0];
+        }
+    }
+    const headers = {
+        'Content-Type': 'application/json',
+    };
+
+    if (csrfToken) {
+        headers['X-CSRFToken'] = csrfToken;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'POST',
+            headers: headers,
+            credentials: 'include',
+            body: JSON.stringify(data)
+        });
+        const responseData = await response.json();
+        return {
+            ok: response.ok,
+            status: response.status,
+            data: responseData
+        };
+    } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        return {
+            ok: false,
+            status: 'error',
+            message: errorMessage
+        };
+    }
+}
+
+/**
+ * Sends a GET request to the API, optionally with activation parameters.
+ * @param {string} [uid] - User ID for account activation.
+ * @param {string} [token] - Token for account activation.
+ * @returns {Promise&lt;Response>} Fetch response object.
+ */
+async function getData(uid, token) {
+    const endpoint = (uid &amp;&amp; token) ? `activate/${uid}/${token}/` : `video/`
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+    });
+    return response;
+}
+
+/**
+ * Redirects the user to the registration page after validating the email.
+ * Stores the entered email in localStorage.
+ * @param {Event} event - The click event from the "Register" button/link.
+ */
+function goToRegister(event) {
+    event.preventDefault();
+    let email = document.getElementById("email").value;
+    if (validateEmail(document.getElementById("email"))) {
+        localStorage.setItem('email', email);
+        window.location.href = "./pages/auth/register.html";
+    } else {
+        showToastMessage(true, ["Please enter a valid email address"]);
+    }
+}
+
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#ACTIVATION_CONFIG">ACTIVATION_CONFIG</a></li><li><a href="global.html#ACTIVATION_MESSAGES">ACTIVATION_MESSAGES</a></li><li><a href="global.html#API_BASE_URL">API_BASE_URL</a></li><li><a href="global.html#FORGET_PASSWORD_URL">FORGET_PASSWORD_URL</a></li><li><a href="global.html#LASTREFRESH">LASTREFRESH</a></li><li><a href="global.html#LATESTVIDEOS">LATESTVIDEOS</a></li><li><a href="global.html#LOGIN_URL">LOGIN_URL</a></li><li><a href="global.html#REFRESH_URL">REFRESH_URL</a></li><li><a href="global.html#REGISTER_URL">REGISTER_URL</a></li><li><a href="global.html#STARTINTERVALL">STARTINTERVALL</a></li><li><a href="global.html#TOAST_DURATION">TOAST_DURATION</a></li><li><a href="global.html#URL_TO_INDEX_M3U8">URL_TO_INDEX_M3U8</a></li><li><a href="global.html#VIDEOS">VIDEOS</a></li><li><a href="global.html#activateAccount">activateAccount</a></li><li><a href="global.html#buildActivationHTML">buildActivationHTML</a></li><li><a href="global.html#clearDynamicSections">clearDynamicSections</a></li><li><a href="global.html#closeVideoOverlay">closeVideoOverlay</a></li><li><a href="global.html#confirmPasswordSubmit">confirmPasswordSubmit</a></li><li><a href="global.html#currentResolution">currentResolution</a></li><li><a href="global.html#currentVideo">currentVideo</a></li><li><a href="global.html#doRefresh">doRefresh</a></li><li><a href="global.html#extractActivationParams">extractActivationParams</a></li><li><a href="global.html#extractErrorMessages">extractErrorMessages</a></li><li><a href="global.html#extractParams">extractParams</a></li><li><a href="global.html#forgetEmail">forgetEmail</a></li><li><a href="global.html#forgotEmailSubmit">forgotEmailSubmit</a></li><li><a href="global.html#getActivationContent">getActivationContent</a></li><li><a href="global.html#getData">getData</a></li><li><a href="global.html#getErrorMessage">getErrorMessage</a></li><li><a href="global.html#getFormData">getFormData</a></li><li><a href="global.html#getHeaderTemplate">getHeaderTemplate</a></li><li><a href="global.html#getNewestVideos">getNewestVideos</a></li><li><a href="global.html#getToastHTML">getToastHTML</a></li><li><a href="global.html#goBackURL">goBackURL</a></li><li><a href="global.html#goToRegister">goToRegister</a></li><li><a href="global.html#handleActivationError">handleActivationError</a></li><li><a href="global.html#handleActivationSuccess">handleActivationSuccess</a></li><li><a href="global.html#handleResolutionChange">handleResolutionChange</a></li><li><a href="global.html#hideHeader">hideHeader</a></li><li><a href="global.html#hls">hls</a></li><li><a href="global.html#initActivation">initActivation</a></li><li><a href="global.html#initDOMElements">initDOMElements</a></li><li><a href="global.html#initEventListeners">initEventListeners</a></li><li><a href="global.html#initPasswordReset">initPasswordReset</a></li><li><a href="global.html#initRegister">initRegister</a></li><li><a href="global.html#initScrollIndicators">initScrollIndicators</a></li><li><a href="global.html#initVideoList">initVideoList</a></li><li><a href="global.html#loadAndSetupVideos">loadAndSetupVideos</a></li><li><a href="global.html#loadVideo">loadVideo</a></li><li><a href="global.html#loadVideoInOverlay">loadVideoInOverlay</a></li><li><a href="global.html#logIn">logIn</a></li><li><a href="global.html#logInSubmit">logInSubmit</a></li><li><a href="global.html#logOut">logOut</a></li><li><a href="global.html#openVideoOverlay">openVideoOverlay</a></li><li><a href="global.html#overlayVideoContainer">overlayVideoContainer</a></li><li><a href="global.html#playVideo">playVideo</a></li><li><a href="global.html#postData">postData</a></li><li><a href="global.html#processActivation">processActivation</a></li><li><a href="global.html#renderCategorySection">renderCategorySection</a></li><li><a href="global.html#renderNewestSection">renderNewestSection</a></li><li><a href="global.html#renderVideosDynamically">renderVideosDynamically</a></li><li><a href="global.html#scrollHorizontally">scrollHorizontally</a></li><li><a href="global.html#setError">setError</a></li><li><a href="global.html#setHeader">setHeader</a></li><li><a href="global.html#setHeaderTemplate">setHeaderTemplate</a></li><li><a href="global.html#setStartVideo">setStartVideo</a></li><li><a href="global.html#setupInitialVideo">setupInitialVideo</a></li><li><a href="global.html#showHeader">showHeader</a></li><li><a href="global.html#showToastAndRedirect">showToastAndRedirect</a></li><li><a href="global.html#showToastMessage">showToastMessage</a></li><li><a href="global.html#showVideo">showVideo</a></li><li><a href="global.html#signUpSubmit">signUpSubmit</a></li><li><a href="global.html#signUpValues">signUpValues</a></li><li><a href="global.html#startRefreshIntervall">startRefreshIntervall</a></li><li><a href="global.html#togglePassword">togglePassword</a></li><li><a href="global.html#updateActivationContent">updateActivationContent</a></li><li><a href="global.html#updateAllScrollIndicators">updateAllScrollIndicators</a></li><li><a href="global.html#updateScrollIndicator">updateScrollIndicator</a></li><li><a href="global.html#validateConfirmPW">validateConfirmPW</a></li><li><a href="global.html#validateEmail">validateEmail</a></li><li><a href="global.html#validateLoginPW">validateLoginPW</a></li><li><a href="global.html#validatePW">validatePW</a></li><li><a href="global.html#validateRegistrationEmail">validateRegistrationEmail</a></li><li><a href="global.html#validateSignUp">validateSignUp</a></li><li><a href="global.html#videoContainer">videoContainer</a></li><li><a href="global.html#videoTemplate">videoTemplate</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Thu Jul 03 2025 13:28:35 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

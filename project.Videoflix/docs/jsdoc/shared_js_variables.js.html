@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: shared/js/variables.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: shared/js/variables.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Stores user input values during the sign-up process.
+ *
+ * @type {{email: string, password: string, confirmed_password: string}}
+ */
+let signUpValues = {
+    "email": "",
+    "password": "",
+    "confirmed_password": "",
+}
+
+/**
+ * Holds a list of video metadata or objects (fetched or cached).
+ * Content structure is assumed to be dynamic or fetched later.
+ *
+ * @type {any}
+ */
+let VIDEOS
+
+/**
+ * Stores the latest videos fetched or displayed.
+ *
+ * @type {any[]}
+ */
+let LATESTVIDEOS = []
+
+/**
+ * Timestamp or indicator of the last data refresh.
+ *
+ * @type {any}
+ */
+let LASTREFRESH
+
+/**
+ * Stores the interval ID returned by setInterval,
+ * used to clear the interval later with clearInterval().
+ *
+ * @type {number | undefined}
+ */
+let STARTINTERVALL
+
+/**
+ * Instance of the HLS.js player used for video streaming.
+ *
+ * @type {Hls | undefined}
+ */
+let hls
+
+/**
+ * Reference to the HTML container element for the video player.
+ *
+ * @type {HTMLElement | null}
+ */
+let videoContainer
+
+/**
+ * Reference to the HTML overlay container for the video (e.g., modals or previews).
+ *
+ * @type {HTMLElement | null}
+ */
+let overlayVideoContainer
+
+/**
+ * Stores the currently selected or playing video object.
+ *
+ * @type {any}
+ */
+let currentVideo
+
+/**
+ * Current video resolution selected by the user (default is '480p').
+ *
+ * @type {string}
+ */
+let currentResolution = '480p'
+
+/**
+ * Predefined messages for different activation states (e.g., loading, success, error).
+ *
+ * @type {{
+ *   processing: {icon: string, title: string, text: string},
+ *   success: {icon: string, title: string, text: string},
+ *   error: {icon: string, title: string, text: string}
+ * }}
+ */
+const ACTIVATION_MESSAGES = {
+    processing: {
+        icon: '',
+        title: 'Processing...',
+        text: 'Please wait while we process your request.'
+    },
+    success: {
+        icon: '&lt;img src="/assets/icons/check_circle.svg" alt="Success" width="28" height="28">',
+        title: 'Success!',
+        text: 'Operation completed successfully!'
+    },
+    error: {
+        icon: '&lt;img src="/assets/icons/error.svg" alt="Error" width="28" height="28">',
+        title: 'Error',
+        text: 'Something went wrong.'
+    }
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#ACTIVATION_CONFIG">ACTIVATION_CONFIG</a></li><li><a href="global.html#ACTIVATION_MESSAGES">ACTIVATION_MESSAGES</a></li><li><a href="global.html#API_BASE_URL">API_BASE_URL</a></li><li><a href="global.html#FORGET_PASSWORD_URL">FORGET_PASSWORD_URL</a></li><li><a href="global.html#LASTREFRESH">LASTREFRESH</a></li><li><a href="global.html#LATESTVIDEOS">LATESTVIDEOS</a></li><li><a href="global.html#LOGIN_URL">LOGIN_URL</a></li><li><a href="global.html#REFRESH_URL">REFRESH_URL</a></li><li><a href="global.html#REGISTER_URL">REGISTER_URL</a></li><li><a href="global.html#STARTINTERVALL">STARTINTERVALL</a></li><li><a href="global.html#TOAST_DURATION">TOAST_DURATION</a></li><li><a href="global.html#URL_TO_INDEX_M3U8">URL_TO_INDEX_M3U8</a></li><li><a href="global.html#VIDEOS">VIDEOS</a></li><li><a href="global.html#activateAccount">activateAccount</a></li><li><a href="global.html#buildActivationHTML">buildActivationHTML</a></li><li><a href="global.html#clearDynamicSections">clearDynamicSections</a></li><li><a href="global.html#closeVideoOverlay">closeVideoOverlay</a></li><li><a href="global.html#confirmPasswordSubmit">confirmPasswordSubmit</a></li><li><a href="global.html#currentResolution">currentResolution</a></li><li><a href="global.html#currentVideo">currentVideo</a></li><li><a href="global.html#doRefresh">doRefresh</a></li><li><a href="global.html#extractActivationParams">extractActivationParams</a></li><li><a href="global.html#extractErrorMessages">extractErrorMessages</a></li><li><a href="global.html#extractParams">extractParams</a></li><li><a href="global.html#forgetEmail">forgetEmail</a></li><li><a href="global.html#forgotEmailSubmit">forgotEmailSubmit</a></li><li><a href="global.html#getActivationContent">getActivationContent</a></li><li><a href="global.html#getData">getData</a></li><li><a href="global.html#getErrorMessage">getErrorMessage</a></li><li><a href="global.html#getFormData">getFormData</a></li><li><a href="global.html#getHeaderTemplate">getHeaderTemplate</a></li><li><a href="global.html#getNewestVideos">getNewestVideos</a></li><li><a href="global.html#getToastHTML">getToastHTML</a></li><li><a href="global.html#goBackURL">goBackURL</a></li><li><a href="global.html#goToRegister">goToRegister</a></li><li><a href="global.html#handleActivationError">handleActivationError</a></li><li><a href="global.html#handleActivationSuccess">handleActivationSuccess</a></li><li><a href="global.html#handleResolutionChange">handleResolutionChange</a></li><li><a href="global.html#hideHeader">hideHeader</a></li><li><a href="global.html#hls">hls</a></li><li><a href="global.html#initActivation">initActivation</a></li><li><a href="global.html#initDOMElements">initDOMElements</a></li><li><a href="global.html#initEventListeners">initEventListeners</a></li><li><a href="global.html#initPasswordReset">initPasswordReset</a></li><li><a href="global.html#initRegister">initRegister</a></li><li><a href="global.html#initScrollIndicators">initScrollIndicators</a></li><li><a href="global.html#initVideoList">initVideoList</a></li><li><a href="global.html#loadAndSetupVideos">loadAndSetupVideos</a></li><li><a href="global.html#loadVideo">loadVideo</a></li><li><a href="global.html#loadVideoInOverlay">loadVideoInOverlay</a></li><li><a href="global.html#logIn">logIn</a></li><li><a href="global.html#logInSubmit">logInSubmit</a></li><li><a href="global.html#logOut">logOut</a></li><li><a href="global.html#openVideoOverlay">openVideoOverlay</a></li><li><a href="global.html#overlayVideoContainer">overlayVideoContainer</a></li><li><a href="global.html#playVideo">playVideo</a></li><li><a href="global.html#postData">postData</a></li><li><a href="global.html#processActivation">processActivation</a></li><li><a href="global.html#renderCategorySection">renderCategorySection</a></li><li><a href="global.html#renderNewestSection">renderNewestSection</a></li><li><a href="global.html#renderVideosDynamically">renderVideosDynamically</a></li><li><a href="global.html#scrollHorizontally">scrollHorizontally</a></li><li><a href="global.html#setError">setError</a></li><li><a href="global.html#setHeader">setHeader</a></li><li><a href="global.html#setHeaderTemplate">setHeaderTemplate</a></li><li><a href="global.html#setStartVideo">setStartVideo</a></li><li><a href="global.html#setupInitialVideo">setupInitialVideo</a></li><li><a href="global.html#showHeader">showHeader</a></li><li><a href="global.html#showToastAndRedirect">showToastAndRedirect</a></li><li><a href="global.html#showToastMessage">showToastMessage</a></li><li><a href="global.html#showVideo">showVideo</a></li><li><a href="global.html#signUpSubmit">signUpSubmit</a></li><li><a href="global.html#signUpValues">signUpValues</a></li><li><a href="global.html#startRefreshIntervall">startRefreshIntervall</a></li><li><a href="global.html#togglePassword">togglePassword</a></li><li><a href="global.html#updateActivationContent">updateActivationContent</a></li><li><a href="global.html#updateAllScrollIndicators">updateAllScrollIndicators</a></li><li><a href="global.html#updateScrollIndicator">updateScrollIndicator</a></li><li><a href="global.html#validateConfirmPW">validateConfirmPW</a></li><li><a href="global.html#validateEmail">validateEmail</a></li><li><a href="global.html#validateLoginPW">validateLoginPW</a></li><li><a href="global.html#validatePW">validatePW</a></li><li><a href="global.html#validateRegistrationEmail">validateRegistrationEmail</a></li><li><a href="global.html#validateSignUp">validateSignUp</a></li><li><a href="global.html#videoContainer">videoContainer</a></li><li><a href="global.html#videoTemplate">videoTemplate</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Thu Jul 03 2025 13:28:35 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+.toast_msg {
+    position: fixed;
+    bottom: calc(var(--form-pad) / 2);
+    left: var(--form-pad);
+    min-height: 50px;
+    box-shadow: 0px 0px 16px 0px #0000003d;
+    min-width: 300px;
+    max-width: 450px;
+    border-radius: 8px;
+    overflow: hidden;
+    transform: translateX(-100%);
+    animation: slideInFromLeft 0.25s ease-out forwards;
+    z-index: 11;
+    background: #2E3EDF;
+    color: white;
+}
+
+.toast_msg[hint="true"] {
+    background: #ffc107;
+}
+
+@keyframes slideInFromLeft {
+    0% {
+        opacity: 0;
+        transform: translateX(-100%);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.toast_msg_left {
+    align-self: stretch;
+    border-radius: 4px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast_msg_left img {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+}
+
+@media screen and (max-width: 500px) {
+    .toast_msg_left {
+        width: 16px;
+        padding: 4px;
+    }
+
+    .toast_msg_left img {
+        width: 16px;
+        height: 16px;
+    }
+
+    .toast_msg {
+        min-width: 0px;
+        margin-right: 16px;
+    }
+}
+
+.toast_msg[error="true"] .toast_msg_left {
+    background: rgba(255, 0, 0, 1);
+}
+
+.toast_msg[error="false"] .toast_msg_left {
+    background: rgba(0, 207, 124, 1);
+}
+
+.toast_msg[error="true"] img[error="false"] {
+    display: none;
+}
+
+.toast_msg[error="false"] img[error="true"] {
+    display: none;
+}
+
+.toast_msg[error="true"] h3[error="false"] {
+    display: none;
+}
+
+.toast_msg[error="false"] h3[error="true"] {
+    display: none;
+}
+
+.toast_msg_right {
+    position: relative;
+    flex: 1;
+    padding: 8px 0;
+    display: flex;
+    gap: 8px;
+    flex-direction: column;
+    color: white;
+}
+
+.toast_msg_right h3 {
+    color: white;
+}
+
+.toast_msg_right ul {
+    flex: 1;
+    padding: 0px;
+    list-style-type: none;
+    color: white;
+}
+
+.toast_msg_right ul li {
+    color: white;
+}
+
+.toast_msg_hint {
+    position: relative;
+    flex: 1;
+    padding: var(--btn-pad);
+    display: flex;
+    gap: 8px;
+    flex-direction: column;
+    background-color: whitesmoke;
+}
+
+.toast_cancel {
+    background-color: var(--bg-color-light);
+    align-self: stretch;
+}

@@ -28,3 +28,23 @@ venv/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Backup when embedding frontend files into this repo
+project.Videoflix/.git.frontend-backup/
+
+# Frontend-specific generated/local files
+project.Videoflix/node_modules/
+project.Videoflix/.idea/
+project.Videoflix/.vscode/
+project.Videoflix/.history/
+project.Videoflix/.env
+project.Videoflix/.env.*
+project.Videoflix/*.log
+project.Videoflix/__pycache__/
+project.Videoflix/.ipynb_checkpoints/
+project.Videoflix/htmlcov/
+project.Videoflix/.pytest_cache/
+project.Videoflix/.mypy_cache/
+project.Videoflix/.coverage
+project.Videoflix/.coverage.*
+project.Videoflix/.tox/

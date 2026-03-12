@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Videoflix - Startseite</title>
+
+    <link rel="icon" href="./assets/icons/logo_icon_small.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/shared/css/variables.css">
+    <link rel="stylesheet" href="/shared/css/standard.css">
+    <link rel="stylesheet" href="/shared/css/fonts.css">
+    <link rel="stylesheet" href="/shared/css/assets.css">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/shared/css/header_footer.css">
+    <link rel="stylesheet" href="/shared/css/toast_msg.css">
+
+    <script src="/shared/js/variables.js" defer></script>
+    <script src="/shared/js/config.js"></script>
+    <script src="/shared/js/auth.js"></script>
+    <script src="/shared/js/ui_helper.js"></script>
+    <script src="/shared/js/api.js"></script>
+    <script src="/shared/js/header.js"></script>
+</head>
+<body onload="" class="img_bg index_bg">
+<header class="main_header w_full">
+    <a aria-label="main page" href="../index.html">
+        <img src="/assets/icons/logo_icon_small.svg" alt="" srcset="">
+        <img src="/assets/icons/logo_icon.svg" alt="" srcset="">
+    </a>
+    <div id="head_content_right" class="d_flex_cc_gm head_content_right">
+        <div class="d_flex_cc_gm">
+            <a href="./pages/auth/login.html" class="std_btn btn_prime pad_s d_flex_cc_gs">
+                Log in
+            </a>
+        </div>
+    </div>
+</header>
+<main class="w_full d_flex_cc_gl">
+    <section class="d_flex_cc_gl f_d_c font_white_color">
+        <h1>Movies, TV shows, and more</h1>
+        <p>Enter your email to create or restart your subscription.</p>
+        <form onsubmit="goToRegister(event)" class="d_flex_cc_gm index_form">
+            <div error="false" id="email_group" class="form_group_w_icon_wo_label w_full d_flex_cc_gm">
+                <label for="email"></label>
+                <input type="text" placeholder="Email Address" name="email" id="email" class="input_index" required
+                       autocomplete="email">
+                <div class="d_flex_cc_gm">
+                    <button type="submit" class="std_btn btn_prime pad_s d_flex_cc_gm">
+                        Sign Up
+                        <img src="./assets/icons/chevron_right.svg" alt="" srcset="">
+                    </button>
+                </div>
+            </div>
+        </form>
+    </section>
+</main>
+<footer class="main_footer w_full">
+    <nav class="d_flex_cc_gl w_full">
+        <a href="./pages/privacy/index.html" class="link">Privacy Policy</a>
+        <a href="./pages/imprint/index.html" class="link">Imprint</a>
+    </nav>
+</footer>
+</body>
+</html>

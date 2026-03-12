@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Videoflix - SignUp</title>
+    <link rel="stylesheet" href="/shared/css/variables.css">
+    <link rel="stylesheet" href="/shared/css/standard.css">
+    <link rel="stylesheet" href="/shared/css/fonts.css">
+    <link rel="stylesheet" href="/shared/css/assets.css">
+    <link rel="stylesheet" href="/shared/css/form.css">
+    <link rel="stylesheet" href="/shared/css/header_footer.css">
+    <link rel="stylesheet" href="./auth.css">
+    <link rel="stylesheet" href="/shared/css/toast_msg.css">
+    <link rel="icon" href="/assets/icons/logo_icon_small.svg" type="image/svg+xml">
+
+    <script src="/shared/js/variables.js"></script>
+    <script src="/shared/js/config.js"></script>
+    <script src="/shared/js/ui_helper.js"></script>
+    <script src="/shared/js/api.js"></script>
+    <script src="/shared/js/auth.js"></script>
+    <script src="/shared/js/header.js"></script>
+</head>
+
+<body onload="setHeader(), initRegister()" class="img_bg signup_bg">
+<header class="main_header w_full">
+    <a aria-label="login page" href="/pages/auth/login.html">
+        <img src="/assets/icons/logo_icon_small.svg" alt="" srcset="">
+        <img src="/assets/icons/logo_icon.svg" alt="" srcset="">
+    </a>
+    <div id="head_content_right" class="d_flex_cc_gm head_content_right"></div>
+</header>
+<main class="w_full d_flex_cc_gl">
+    <form onsubmit="signUpSubmit(event)" id="sign_up_form" class="std_form d_flex_cs_gl f_d_c" novalidate>
+        <h1 class="font_prime_color d_flex_cs_gl w_full">Sign up</h1>
+        <div error="false" id="email_group" class="form_group_w_icon_wo_label w_full">
+            <img src="../../assets/icons/mail.png" alt="Icon">
+            <input onblur="validateRegistrationEmail(this)" type="text" id="email" name="email" required
+                   autocomplete="email">
+            <label for="email">Email</label>
+            <p class="error_label">Please enter a valid email address.</p>
+        </div>
+        <div error="false" id="password_group" class="form_group_w_icon_wo_label w_full">
+            <img src="../../assets/icons/password.png" alt="Icon">
+            <input onblur="validatePW(this)" type="password" id="password" name="password" required
+                   autocomplete="new-password">
+            <label for="password">Password</label>
+            <img onclick="togglePassword(this)" class="password_eye" src="../../assets/icons/visibility.svg"
+                 alt="" srcset="">
+            <p class="error_label">Password must be at least 8 characters long.</p>
+        </div>
+        <div error="false" id="confirmed_password_group" class="form_group_w_icon_wo_label w_full">
+            <img src="../../assets/icons/password.png" alt="Icon">
+            <input onblur="validateConfirmPW(this)" type="password" id="confirmed_password" name="confirmed_password"
+                   required autocomplete="new-password">
+            <label for="confirmed_password">Confirm password</label>
+            <img onclick="togglePassword(this)" class="password_eye" src="../../assets/icons/visibility.svg"
+                 alt="" srcset="">
+            <p class="error_label">Passwords do not match.</p>
+        </div>
+        <div error="false" id="privacy_policy_group" class="form_group_checkbox w_full" style="margin-top: 16px;">
+            <label class="custom_checkbox" for="privacy_policy">
+                <input type="checkbox" id="privacy_policy" name="privacy_policy" required">
+                <span class="checkbox_icon"></span>
+                <span>Please accept the <a href="../privacy/index.html" class="link" onclick="event.stopPropagation();">Privacy Policy</a></span>
+            </label>
+            <p class="error_label">must accept the privacy policy to continue.</p>
+        </div>
+
+
+
+        <div class="d_flex_cc_gl f_d_r_resp_c w_full">
+            <button type="submit" class="std_btn btn_prime pad_s d_flex_cc_gs">
+                Get started
+            </button>
+        </div>
+    </form>
+</main>
+<footer class="main_footer w_full">
+    <nav class="d_flex_cc_gl w_full">
+        <a aria-label="privacy policy page" href="../privacy/index.html" class="link">Privacy Policy</a>
+        <a aria-label="imprint page" href="../imprint/index.html" class="link">Imprint</a>
+    </nav>
+</footer>
+</body>
+
+</html>

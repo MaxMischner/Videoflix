@@ -1,0 +1,39 @@
+.index_bg {
+    background-image: linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 1) 100%),
+    url("./assets/img/index_bg.jpg");
+}
+
+.dark_bg {
+    background-color: rgba(20, 20, 20, 1);
+}
+
+.input_index {
+    border: 2px solid white;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 12px 14px;
+    border-radius: 40px;
+    outline: none;
+    width: 350px;
+}
+
+.input_index::placeholder {
+    color: white;
+}
+
+@media screen and (max-width: 768px) {
+    .index_form {
+        flex-direction: column !important;
+        width: 100%;
+    }
+
+    .input_index {
+        width: 100%;
+    }
+}
+
+@media (max-width: 500px) {
+    #email_group {
+        flex-direction: column;
+    }
+}

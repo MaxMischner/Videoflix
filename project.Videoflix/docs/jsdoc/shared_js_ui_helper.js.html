@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: shared/js/ui_helper.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: shared/js/ui_helper.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Sets an "error" attribute on a given HTML element.
+ *
+ * @function setError
+ * @param {boolean} valid - Indicates if the input is valid (true or false).
+ * @param {string} id - The ID of the HTML element to modify.
+ */
+function setError(valid, id) {
+    document.getElementById(id).setAttribute("error", valid)
+}
+
+/**
+ * Toggles the visibility of a password input field and updates the icon accordingly.
+ *
+ * @function togglePassword
+ * @param {HTMLImageElement} icon - The eye icon element that was clicked.
+ */
+function togglePassword(icon) {
+    const container = icon.closest(".form_group_w_icon_wo_label");
+    const input = container.querySelector("input[type='password'], input[type='text']");
+
+    if (input) {
+        if (input.type === "password") {
+            input.type = "text";
+            icon.src = "../../assets/icons/visibility_off.svg";
+        } else {
+            input.type = "password";
+            icon.src = "../../assets/icons/visibility.svg";
+        }
+    }
+}
+
+/**
+ * Recursively extracts all error messages from a nested error object.
+ *
+ * @function extractErrorMessages
+ * @param {Object} errorObject - The error object returned from a server or validation.
+ * @returns {string[]} - A flat array of error messages.
+ */
+function extractErrorMessages(errorObject) {
+    let errorMessages = [];
+
+    for (let key in errorObject) {
+        if (errorObject.hasOwnProperty(key)) {
+            const value = errorObject[key];
+            if (typeof value === 'object' &amp;&amp; value !== null) {
+                errorMessages = errorMessages.concat(extractErrorMessages(value));
+            } else if (Array.isArray(value)) {
+                errorMessages = errorMessages.concat(value);
+            } else {
+                errorMessages.push(value);
+            }
+        }
+    }
+    return errorMessages;
+}
+
+/**
+ * Displays a temporary toast message on the screen.
+ *
+ * @function showToastMessage
+ * @param {boolean} [error=true] - Indicates whether the toast is for an error (true) or success (false).
+ * @param {string[]} [msg=[]] - Array of messages to display in the toast.
+ */
+function showToastMessage(error = true, msg = []) {
+    const toast = document.createElement('div');
+    toast.className = 'toast_msg d_flex_cc_gm';
+    toast.innerHTML = getToastHTML(msg, error);
+    toast.setAttribute('error', error);
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+/**
+ * Builds the HTML content for a toast message.
+ *
+ * @function getToastHTML
+ * @param {string[]} msg - Array of messages to display.
+ * @param {boolean} error - Indicates whether the toast is for an error or success.
+ * @returns {string} - The HTML string for the toast content.
+ */
+function getToastHTML(msg, error) {
+    let msglist = "";
+    if (msg.length &lt;= 0) {
+        msglist = error ? "&lt;li>An error has occurred&lt;/li>" : "&lt;li>That worked!&lt;/li>"
+    }
+    for (let i = 0; i &lt; msg.length; i++) {
+        msglist += `&lt;li>${msg[i]}&lt;/li>`
+    }
+
+    const icon = error
+        ? '&lt;img src="/assets/icons/error.svg" alt="Error" width="24" height="24">'
+        : '&lt;img src="/assets/icons/check_circle.svg" alt="Success" width="24" height="24">';
+
+    return `&lt;div class="toast_msg_left d_flex_cc_gm">
+                ${icon}
+            &lt;/div>
+            &lt;div class="toast_msg_right">
+                &lt;h3 error="false">Success&lt;/h3>
+                &lt;h3 error="true">Error&lt;/h3>
+                &lt;ul class="w_full">
+                    ${msglist}
+                &lt;/ul>
+            &lt;/div>`
+}
+
+/**
+ * Extracts `uid` and `token` parameters from the current page URL.
+ *
+ * @function extractParams
+ * @returns {{uid: string, token: string} | null} - The extracted parameters or null if missing.
+ */
+function extractParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const uid = urlParams.get('uid');
+    const token = urlParams.get('token');
+
+    if (uid &amp;&amp; token) {
+        return {uid, token};
+    }
+    return null;
+}
+
+/**
+ * Shows a toast message and optionally redirects to a different URL after a delay.
+ *
+ * @function showToastAndRedirect
+ * @param {boolean} [error=true] - Indicates if the message is an error.
+ * @param {string[]} [msg=[]] - Messages to display in the toast.
+ * @param {string|null} [redirectUrl=null] - The URL to redirect to after the toast.
+ * @param {number} [delay=TOAST_DURATION] - Delay in milliseconds before redirecting.
+ */
+function showToastAndRedirect(error = true, msg = [], redirectUrl = null, delay = TOAST_DURATION) {
+    showToastMessage(error, msg);
+
+    if (redirectUrl) {
+        setTimeout(() => {
+            window.location.href = redirectUrl;
+        }, delay);
+    }
+}
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#ACTIVATION_CONFIG">ACTIVATION_CONFIG</a></li><li><a href="global.html#ACTIVATION_MESSAGES">ACTIVATION_MESSAGES</a></li><li><a href="global.html#API_BASE_URL">API_BASE_URL</a></li><li><a href="global.html#FORGET_PASSWORD_URL">FORGET_PASSWORD_URL</a></li><li><a href="global.html#LASTREFRESH">LASTREFRESH</a></li><li><a href="global.html#LATESTVIDEOS">LATESTVIDEOS</a></li><li><a href="global.html#LOGIN_URL">LOGIN_URL</a></li><li><a href="global.html#REFRESH_URL">REFRESH_URL</a></li><li><a href="global.html#REGISTER_URL">REGISTER_URL</a></li><li><a href="global.html#STARTINTERVALL">STARTINTERVALL</a></li><li><a href="global.html#TOAST_DURATION">TOAST_DURATION</a></li><li><a href="global.html#URL_TO_INDEX_M3U8">URL_TO_INDEX_M3U8</a></li><li><a href="global.html#VIDEOS">VIDEOS</a></li><li><a href="global.html#activateAccount">activateAccount</a></li><li><a href="global.html#buildActivationHTML">buildActivationHTML</a></li><li><a href="global.html#clearDynamicSections">clearDynamicSections</a></li><li><a href="global.html#closeVideoOverlay">closeVideoOverlay</a></li><li><a href="global.html#confirmPasswordSubmit">confirmPasswordSubmit</a></li><li><a href="global.html#currentResolution">currentResolution</a></li><li><a href="global.html#currentVideo">currentVideo</a></li><li><a href="global.html#doRefresh">doRefresh</a></li><li><a href="global.html#extractActivationParams">extractActivationParams</a></li><li><a href="global.html#extractErrorMessages">extractErrorMessages</a></li><li><a href="global.html#extractParams">extractParams</a></li><li><a href="global.html#forgetEmail">forgetEmail</a></li><li><a href="global.html#forgotEmailSubmit">forgotEmailSubmit</a></li><li><a href="global.html#getActivationContent">getActivationContent</a></li><li><a href="global.html#getData">getData</a></li><li><a href="global.html#getErrorMessage">getErrorMessage</a></li><li><a href="global.html#getFormData">getFormData</a></li><li><a href="global.html#getHeaderTemplate">getHeaderTemplate</a></li><li><a href="global.html#getNewestVideos">getNewestVideos</a></li><li><a href="global.html#getToastHTML">getToastHTML</a></li><li><a href="global.html#goBackURL">goBackURL</a></li><li><a href="global.html#goToRegister">goToRegister</a></li><li><a href="global.html#handleActivationError">handleActivationError</a></li><li><a href="global.html#handleActivationSuccess">handleActivationSuccess</a></li><li><a href="global.html#handleResolutionChange">handleResolutionChange</a></li><li><a href="global.html#hideHeader">hideHeader</a></li><li><a href="global.html#hls">hls</a></li><li><a href="global.html#initActivation">initActivation</a></li><li><a href="global.html#initDOMElements">initDOMElements</a></li><li><a href="global.html#initEventListeners">initEventListeners</a></li><li><a href="global.html#initPasswordReset">initPasswordReset</a></li><li><a href="global.html#initRegister">initRegister</a></li><li><a href="global.html#initScrollIndicators">initScrollIndicators</a></li><li><a href="global.html#initVideoList">initVideoList</a></li><li><a href="global.html#loadAndSetupVideos">loadAndSetupVideos</a></li><li><a href="global.html#loadVideo">loadVideo</a></li><li><a href="global.html#loadVideoInOverlay">loadVideoInOverlay</a></li><li><a href="global.html#logIn">logIn</a></li><li><a href="global.html#logInSubmit">logInSubmit</a></li><li><a href="global.html#logOut">logOut</a></li><li><a href="global.html#openVideoOverlay">openVideoOverlay</a></li><li><a href="global.html#overlayVideoContainer">overlayVideoContainer</a></li><li><a href="global.html#playVideo">playVideo</a></li><li><a href="global.html#postData">postData</a></li><li><a href="global.html#processActivation">processActivation</a></li><li><a href="global.html#renderCategorySection">renderCategorySection</a></li><li><a href="global.html#renderNewestSection">renderNewestSection</a></li><li><a href="global.html#renderVideosDynamically">renderVideosDynamically</a></li><li><a href="global.html#scrollHorizontally">scrollHorizontally</a></li><li><a href="global.html#setError">setError</a></li><li><a href="global.html#setHeader">setHeader</a></li><li><a href="global.html#setHeaderTemplate">setHeaderTemplate</a></li><li><a href="global.html#setStartVideo">setStartVideo</a></li><li><a href="global.html#setupInitialVideo">setupInitialVideo</a></li><li><a href="global.html#showHeader">showHeader</a></li><li><a href="global.html#showToastAndRedirect">showToastAndRedirect</a></li><li><a href="global.html#showToastMessage">showToastMessage</a></li><li><a href="global.html#showVideo">showVideo</a></li><li><a href="global.html#signUpSubmit">signUpSubmit</a></li><li><a href="global.html#signUpValues">signUpValues</a></li><li><a href="global.html#startRefreshIntervall">startRefreshIntervall</a></li><li><a href="global.html#togglePassword">togglePassword</a></li><li><a href="global.html#updateActivationContent">updateActivationContent</a></li><li><a href="global.html#updateAllScrollIndicators">updateAllScrollIndicators</a></li><li><a href="global.html#updateScrollIndicator">updateScrollIndicator</a></li><li><a href="global.html#validateConfirmPW">validateConfirmPW</a></li><li><a href="global.html#validateEmail">validateEmail</a></li><li><a href="global.html#validateLoginPW">validateLoginPW</a></li><li><a href="global.html#validatePW">validatePW</a></li><li><a href="global.html#validateRegistrationEmail">validateRegistrationEmail</a></li><li><a href="global.html#validateSignUp">validateSignUp</a></li><li><a href="global.html#videoContainer">videoContainer</a></li><li><a href="global.html#videoTemplate">videoTemplate</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.4</a> on Thu Jul 03 2025 13:28:35 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
