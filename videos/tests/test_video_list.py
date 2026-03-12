@@ -51,10 +51,11 @@ class VideoListEndpointTests(TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(len(data), 2)
-        self.assertEqual(data[0]["title"], "Movie Title")
-        self.assertEqual(data[0]["description"], "Movie Description")
-        self.assertEqual(data[0]["thumbnail_url"], "http://example.com/media/thumbnail/image.jpg")
-        self.assertEqual(data[0]["category"], "Drama")
+        self.assertEqual(data[0]["title"], "Another Movie")
+        self.assertEqual(data[0]["description"], "Another Description")
+        self.assertEqual(data[0]["thumbnail_url"], "http://example.com/media/thumbnail/image2.jpg")
+        self.assertEqual(data[0]["category"], "Romance")
+        self.assertEqual(data[1]["title"], "Movie Title")
         self.assertIn("created_at", data[0])
 
     def test_video_list_returns_401_without_authentication(self):

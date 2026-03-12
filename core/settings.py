@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
+    'common',
     'users',
     'videos',
 ]
@@ -201,6 +202,15 @@ EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", default="False").lower() == "tru
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER)
 
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", default="http://127.0.0.1:8000")
+FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", default="http://localhost:5500")
+FRONTEND_ACTIVATION_PATH = os.environ.get(
+    "FRONTEND_ACTIVATION_PATH",
+    default="/pages/auth/confirm_email.html",
+)
+FRONTEND_PASSWORD_RESET_PATH = os.environ.get(
+    "FRONTEND_PASSWORD_RESET_PATH",
+    default="/pages/auth/confirm_password.html",
+)
 
 VIDEO_STREAM_ROOT = BASE_DIR / 'media' / 'video'
 

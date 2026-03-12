@@ -4,6 +4,9 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 
+GENERIC_LOGIN_ERROR = "Bitte überprüfe deine Eingaben und versuche es erneut."
+
+
 class LoginEndpointTests(TestCase):
     def setUp(self):
         self.url = "/api/login/"
@@ -50,5 +53,46 @@ class LoginEndpointTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"detail": GENERIC_LOGIN_ERROR})
         self.assertNotIn("access_token", response.cookies)
         self.assertNotIn("refresh_token", response.cookies)
+
+    def test_login_with_inactive_user_returns_generic_error(self):
+        self.user.is_active = False
+        self.user.save(update_fields=["is_active"])
+
+        payload = {
+            "email": "user@example.com",
+            "password": "securepassword",
+        }
+        response = self.client.post(
+            self.url,
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"detail": GENERIC_LOGIN_ERROR})
+
+    def test_login_with_missing_password_returns_generic_error(self):
+        payload = {
+            "email": "user@example.com",
+        }
+        response = self.client.post(
+            self.url,
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"detail": GENERIC_LOGIN_ERROR})
+
+    def test_login_with_invalid_json_returns_generic_error(self):
+        response = self.client.post(
+            self.url,
+            data="{",
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"detail": GENERIC_LOGIN_ERROR})

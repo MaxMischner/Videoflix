@@ -19,6 +19,7 @@ class PasswordConfirmEndpointTests(TestCase):
         self.uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
         self.token = default_token_generator.make_token(self.user)
         self.url = f"/api/password_confirm/{self.uidb64}/{self.token}/"
+        self.login_url = "/api/login/"
 
     def test_password_confirm_resets_password_and_returns_200(self):
         payload = {
@@ -37,6 +38,32 @@ class PasswordConfirmEndpointTests(TestCase):
 
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password("newsecurepassword"))
+
+    def test_user_can_login_with_new_password_after_confirm(self):
+        payload = {
+            "new_password": "newsecurepassword",
+            "confirm_password": "newsecurepassword",
+        }
+        confirm_response = self.client.post(
+            self.url,
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(confirm_response.status_code, 200)
+
+        login_response = self.client.post(
+            self.login_url,
+            data=json.dumps(
+                {
+                    "email": "user@example.com",
+                    "password": "newsecurepassword",
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(login_response.status_code, 200)
+        self.assertEqual(login_response.json()["detail"], "Login successful")
 
     def test_password_confirm_with_mismatched_passwords_returns_400(self):
         payload = {

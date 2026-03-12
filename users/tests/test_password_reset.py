@@ -1,8 +1,12 @@
 import json
+from urllib.parse import parse_qs, urlparse
 
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase
+
+
+PASSWORD_RESET_RESPONSE = "Wenn ein Konto mit dieser E-Mail existiert, wurde eine Nachricht versendet."
 
 
 class PasswordResetEndpointTests(TestCase):
@@ -26,11 +30,17 @@ class PasswordResetEndpointTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"detail": "An email has been sent to reset your password."})
+        self.assertEqual(response.json(), {"detail": PASSWORD_RESET_RESPONSE})
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn("confirm_password", mail.outbox[0].body)
+        first_link = mail.outbox[0].body.strip().splitlines()[-1]
+        parsed_link = urlparse(first_link)
+        query = parse_qs(parsed_link.query)
+        self.assertIn("uid", query)
+        self.assertIn("token", query)
+        self.assertIn("confirm_password", parsed_link.path)
+        self.assertTrue(mail.outbox[0].alternatives)
 
-    def test_password_reset_with_unknown_email_returns_400(self):
+    def test_password_reset_with_unknown_email_returns_generic_response(self):
         payload = {"email": "unknown@example.com"}
 
         response = self.client.post(
@@ -39,6 +49,6 @@ class PasswordResetEndpointTests(TestCase):
             content_type="application/json",
         )
 
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json(), {"detail": "User with this email does not exist."})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"detail": PASSWORD_RESET_RESPONSE})
         self.assertEqual(len(mail.outbox), 0)

@@ -2,7 +2,7 @@ FROM python:3.12-alpine
 
 LABEL maintainer="mihai@developerakademie.com"
 LABEL version="1.0"
-LABEL description="Python 3.14.0a7 Alpine 3.21"
+LABEL description="Python 3.12 Alpine"
 
 WORKDIR /app
 
