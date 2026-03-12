@@ -17,6 +17,9 @@ venv/
 # Local frontend clone (separate repository)
 /project.Videoflix/
 
+# Generated media/upload artifacts
+/media/
+
 # Tooling
 .pytest_cache/
 .mypy_cache/

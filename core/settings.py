@@ -10,7 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
+import sys
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +26,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-1^&puai#8+lh&b0!)yz6%cx%71=jeugipu@!zw_%kr(11p$166'
+SECRET_KEY = os.getenv(
+    "SECRET_KEY",
+    default="django-insecure-@#x5h3zj!g+8g1v@2^b6^9$8&f1r7g$@t3v!p4#=g0r5qzj4m3",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", default="localhost").split(",")
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    "CSRF_TRUSTED_ORIGINS",
+    default="http://localhost:5500,http://127.0.0.1:5500",
+).split(",")
+
+enable_django_rq_env = os.getenv("ENABLE_DJANGO_RQ")
+if enable_django_rq_env is None:
+    ENABLE_DJANGO_RQ = os.name != "nt"
+else:
+    ENABLE_DJANGO_RQ = enable_django_rq_env.lower() == "true"
 
 
 # Application definition
@@ -37,10 +56,20 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
+    'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
+    'users',
+    'videos',
 ]
+
+if ENABLE_DJANGO_RQ:
+    INSTALLED_APPS.append('django_rq')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -72,11 +101,46 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+use_sqlite_for_tests = os.getenv("USE_SQLITE_FOR_TESTS", "True").lower() == "true"
+if "test" in sys.argv and use_sqlite_for_tests:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DB_NAME", default="videoflix_db"),
+            "USER": os.environ.get("DB_USER", default="videoflix_user"),
+            "PASSWORD": os.environ.get("DB_PASSWORD", default="supersecretpassword"),
+            "HOST": os.environ.get("DB_HOST", default="db"),
+            "PORT": os.environ.get("DB_PORT", default=5432),
+        }
+    }
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.environ.get("REDIS_LOCATION", default="redis://redis:6379/1"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        "KEY_PREFIX": "videoflix",
+    }
+}
+
+RQ_QUEUES = {
+    "default": {
+        "HOST": os.environ.get("REDIS_HOST", default="redis"),
+        "PORT": os.environ.get("REDIS_PORT", default=6379),
+        "DB": os.environ.get("REDIS_DB", default=0),
+        "DEFAULT_TIMEOUT": 900,
+        "REDIS_CLIENT_KWARGS": {},
+    },
 }
 
 
@@ -114,4 +178,32 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "static"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+CORS_ALLOWED_ORIGINS = os.environ.get(
+    "CSRF_TRUSTED_ORIGINS",
+    default="http://localhost:5500,http://127.0.0.1:5500",
+).split(",")
+CORS_ALLOW_CREDENTIALS = True
+
+EMAIL_HOST = os.environ.get("EMAIL_HOST", default="smtp.example.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", default=587))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", default="True").lower() == "true"
+EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", default="False").lower() == "true"
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER)
+
+PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", default="http://127.0.0.1:8000")
+
+VIDEO_STREAM_ROOT = BASE_DIR / 'media' / 'video'
+
+ENABLE_VIDEO_QUEUE = os.getenv("ENABLE_VIDEO_QUEUE", "True").lower() == "true" and "test" not in sys.argv
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
