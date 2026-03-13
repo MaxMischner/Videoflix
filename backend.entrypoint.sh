@@ -2,6 +2,10 @@
 
 set -e
 
+if [ "$#" -gt 0 ]; then
+  exec "$@"
+fi
+
 echo "Warte auf PostgreSQL auf $DB_HOST:$DB_PORT..."
 
 # -q für "quiet" (keine Ausgabe außer Fehlern)
@@ -38,4 +42,17 @@ else:
     print(f"Superuser '{username}' already exists.")
 EOF
 
-exec gunicorn core.wsgi:application --bind 0.0.0.0:8000
+GUNICORN_WORKERS="${GUNICORN_WORKERS:-2}"
+GUNICORN_THREADS="${GUNICORN_THREADS:-2}"
+GUNICORN_TIMEOUT="${GUNICORN_TIMEOUT:-300}"
+GUNICORN_GRACEFUL_TIMEOUT="${GUNICORN_GRACEFUL_TIMEOUT:-30}"
+GUNICORN_KEEPALIVE="${GUNICORN_KEEPALIVE:-5}"
+
+exec gunicorn core.wsgi:application \
+  --bind 0.0.0.0:8000 \
+  --worker-class gthread \
+  --workers "$GUNICORN_WORKERS" \
+  --threads "$GUNICORN_THREADS" \
+  --timeout "$GUNICORN_TIMEOUT" \
+  --graceful-timeout "$GUNICORN_GRACEFUL_TIMEOUT" \
+  --keep-alive "$GUNICORN_KEEPALIVE"

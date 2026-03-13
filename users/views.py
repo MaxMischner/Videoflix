@@ -42,7 +42,15 @@ def register(request):
     if create_error:
         return create_error
     activation_link = build_activation_link(user)
-    send_activation_email(user, activation_link)
+    try:
+        send_activation_email(user, activation_link)
+    except Exception:
+        # Keep registration consistent: if activation mail cannot be sent, remove the newly created user.
+        user.delete()
+        return JsonResponse(
+            {"error": "Registrierung momentan nicht möglich. Bitte später erneut versuchen."},
+            status=503,
+        )
     return register_response(user)
 
 

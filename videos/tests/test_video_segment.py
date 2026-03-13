@@ -43,6 +43,7 @@ class VideoSegmentEndpointTests(TestCase):
         )
         self.assertEqual(login_response.status_code, 200)
         self.client.cookies["access_token"] = login_response.cookies["access_token"].value
+        self.client.cookies["refresh_token"] = login_response.cookies["refresh_token"].value
 
     def test_segment_returns_200_for_authenticated_user(self):
         self._authenticate()
@@ -81,3 +82,19 @@ class VideoSegmentEndpointTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json(), {"detail": "Video or segment not found."})
+
+    def test_segment_allows_valid_refresh_token_without_access_token(self):
+        self._authenticate()
+        self.client.cookies.pop("access_token", None)
+
+        resolution = "480p"
+        segment_name = "001.ts"
+        segment_dir = Path(self.temp_dir.name) / str(self.video.id) / resolution
+        segment_dir.mkdir(parents=True, exist_ok=True)
+        segment_bytes = b"segment-refresh-auth"
+        (segment_dir / segment_name).write_bytes(segment_bytes)
+
+        response = self.client.get(f"/api/video/{self.video.id}/{resolution}/{segment_name}/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, segment_bytes)

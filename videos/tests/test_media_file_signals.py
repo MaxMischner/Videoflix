@@ -1,5 +1,6 @@
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
@@ -43,3 +44,13 @@ class MediaFileSignalsTests(TestCase):
 
         self.assertFalse(old_path.exists())
         self.assertTrue(Path(media.file.path).exists())
+
+    @override_settings(MEDIA_ROOT=tempfile.gettempdir(), ENABLE_VIDEO_QUEUE=True, ENABLE_DJANGO_RQ=True)
+    @patch("videos.signals.queue_conversion_for_video")
+    def test_post_save_uses_shared_queue_helper_for_tracking(self, queue_helper_mock):
+        media = MediaFile.objects.create(
+            video=self.video,
+            file=SimpleUploadedFile("signal_source.mp4", b"source"),
+        )
+
+        queue_helper_mock.assert_called_once_with(self.video, media)

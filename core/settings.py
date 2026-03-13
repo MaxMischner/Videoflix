@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 import os
 import sys
+import multiprocessing
+from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -41,10 +43,20 @@ CSRF_TRUSTED_ORIGINS = os.environ.get(
 ).split(",")
 
 enable_django_rq_env = os.getenv("ENABLE_DJANGO_RQ")
+
+
+def _supports_rq_worker_runtime() -> bool:
+    """RQ's scheduler needs fork; disable on runtimes where fork is unavailable."""
+    try:
+        return "fork" in multiprocessing.get_all_start_methods()
+    except Exception:
+        return False
+
+
 if enable_django_rq_env is None:
-    ENABLE_DJANGO_RQ = os.name != "nt"
+    ENABLE_DJANGO_RQ = _supports_rq_worker_runtime()
 else:
-    ENABLE_DJANGO_RQ = enable_django_rq_env.lower() == "true"
+    ENABLE_DJANGO_RQ = enable_django_rq_env.lower() == "true" and _supports_rq_worker_runtime()
 
 
 # Application definition
@@ -139,10 +151,12 @@ RQ_QUEUES = {
         "HOST": os.environ.get("REDIS_HOST", default="redis"),
         "PORT": os.environ.get("REDIS_PORT", default=6379),
         "DB": os.environ.get("REDIS_DB", default=0),
-        "DEFAULT_TIMEOUT": 900,
+        "DEFAULT_TIMEOUT": int(os.environ.get("RQ_DEFAULT_TIMEOUT", default=7200)),
         "REDIS_CLIENT_KWARGS": {},
     },
 }
+
+VIDEO_CONVERSION_JOB_TIMEOUT = int(os.environ.get("VIDEO_CONVERSION_JOB_TIMEOUT", default=7200))
 
 
 # Password validation
@@ -208,9 +222,13 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USE
 
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", default="http://127.0.0.1:8000")
 FRONTEND_BASE_URL = os.environ.get("FRONTEND_BASE_URL", default="http://localhost:5500")
+FRONTEND_HOME_PATH = os.environ.get(
+    "FRONTEND_HOME_PATH",
+    default="/index.html",
+)
 FRONTEND_ACTIVATION_PATH = os.environ.get(
     "FRONTEND_ACTIVATION_PATH",
-    default="/pages/auth/confirm_email.html",
+    default="/pages/auth/activate.html",
 )
 FRONTEND_PASSWORD_RESET_PATH = os.environ.get(
     "FRONTEND_PASSWORD_RESET_PATH",
@@ -218,7 +236,17 @@ FRONTEND_PASSWORD_RESET_PATH = os.environ.get(
 )
 
 VIDEO_STREAM_ROOT = BASE_DIR / 'media' / 'video'
+VIDEO_FFMPEG_PRESET = os.getenv("VIDEO_FFMPEG_PRESET", "veryfast")
+VIDEO_FFMPEG_CRF = int(os.getenv("VIDEO_FFMPEG_CRF", "23"))
+VIDEO_FFMPEG_THREADS = int(os.getenv("VIDEO_FFMPEG_THREADS", "0"))
 
 ENABLE_VIDEO_QUEUE = os.getenv("ENABLE_VIDEO_QUEUE", "True").lower() == "true" and "test" not in sys.argv
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=int(os.getenv("JWT_ACCESS_MINUTES", "30"))),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=int(os.getenv("JWT_REFRESH_DAYS", "7"))),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

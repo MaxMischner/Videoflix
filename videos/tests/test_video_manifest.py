@@ -43,6 +43,7 @@ class VideoManifestEndpointTests(TestCase):
         )
         self.assertEqual(login_response.status_code, 200)
         self.client.cookies["access_token"] = login_response.cookies["access_token"].value
+        self.client.cookies["refresh_token"] = login_response.cookies["refresh_token"].value
 
     def test_manifest_returns_200_for_authenticated_user(self):
         self._authenticate()
@@ -80,3 +81,18 @@ class VideoManifestEndpointTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json(), {"detail": "Video or manifest not found."})
+
+    def test_manifest_allows_valid_refresh_token_without_access_token(self):
+        self._authenticate()
+        self.client.cookies.pop("access_token", None)
+
+        resolution = "480p"
+        manifest_dir = Path(self.temp_dir.name) / str(self.video.id) / resolution
+        manifest_dir.mkdir(parents=True, exist_ok=True)
+        manifest_content = "#EXTM3U\n#EXT-X-VERSION:3\n"
+        (manifest_dir / "index.m3u8").write_text(manifest_content, encoding="utf-8")
+
+        response = self.client.get(f"/api/video/{self.video.id}/{resolution}/index.m3u8")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content.decode("utf-8"), manifest_content)

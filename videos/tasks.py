@@ -4,6 +4,10 @@ from pathlib import Path
 from django.conf import settings
 
 
+class QueueUnavailableError(RuntimeError):
+    """Raised when RQ queueing is not available in current runtime."""
+
+
 HLS_PROFILES = {
     "480p": {
         "height": 480,
@@ -25,32 +29,39 @@ HLS_PROFILES = {
     },
 }
 
-HLS_SHARED_ARGS = [
-    "-c:v",
-    "libx264",
-    "-preset",
-    "veryfast",
-    "-crf",
-    "23",
-    "-g",
-    "48",
-    "-keyint_min",
-    "48",
-    "-sc_threshold",
-    "0",
-    "-c:a",
-    "aac",
-    "-b:a",
-    "128k",
-    "-ar",
-    "48000",
-    "-hls_time",
-    "10",
-    "-hls_playlist_type",
-    "vod",
-    "-hls_list_size",
-    "0",
-]
+def _hls_shared_args() -> list[str]:
+    preset = str(getattr(settings, "VIDEO_FFMPEG_PRESET", "veryfast"))
+    crf = str(getattr(settings, "VIDEO_FFMPEG_CRF", 23))
+    threads = int(getattr(settings, "VIDEO_FFMPEG_THREADS", 0))
+    args = [
+        "-c:v",
+        "libx264",
+        "-preset",
+        preset,
+        "-crf",
+        crf,
+        "-g",
+        "48",
+        "-keyint_min",
+        "48",
+        "-sc_threshold",
+        "0",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "128k",
+        "-ar",
+        "48000",
+        "-hls_time",
+        "10",
+        "-hls_playlist_type",
+        "vod",
+        "-hls_list_size",
+        "0",
+    ]
+    if threads > 0:
+        args.extend(["-threads", str(threads)])
+    return args
 
 
 def _get_hls_base_dir(movie_id: int) -> Path:
@@ -66,11 +77,16 @@ def _build_resolution_output_dir(movie_id: int, resolution: str) -> Path:
     return output_dir
 
 
-def _update_video_tracking(movie_id: int, status: str, thumbnail_url: str | None = None) -> None:
+def _update_video_tracking(
+    movie_id: int,
+    status: str,
+    thumbnail_url: str | None = None,
+    progress: int | None = None,
+) -> None:
     video = _find_video_for_tracking(movie_id)
     if not video:
         return
-    update_fields = _tracking_update_fields(video, status, thumbnail_url)
+    update_fields = _tracking_update_fields(video, status, thumbnail_url, progress)
     video.save(update_fields=update_fields)
 
 
@@ -80,9 +96,12 @@ def _find_video_for_tracking(movie_id: int):
     return Video.objects.filter(pk=movie_id).first()
 
 
-def _tracking_update_fields(video, status: str, thumbnail_url: str | None) -> list[str]:
+def _tracking_update_fields(video, status: str, thumbnail_url: str | None, progress: int | None) -> list[str]:
     video.conversion_status = status
     fields = ["conversion_status", "conversion_updated_at"]
+    if progress is not None:
+        video.conversion_progress = max(0, min(100, int(progress)))
+        fields.append("conversion_progress")
     if thumbnail_url is not None:
         video.thumbnail_url = thumbnail_url
         fields.append("thumbnail_url")
@@ -105,7 +124,8 @@ def _hls_input_args(source: str, height: int) -> list[str]:
 
 
 def _hls_encoding_args(maxrate: str, bufsize: str) -> list[str]:
-    return HLS_SHARED_ARGS[:12] + ["-maxrate", maxrate, "-bufsize", bufsize] + HLS_SHARED_ARGS[12:]
+    shared_args = _hls_shared_args()
+    return shared_args[:12] + ["-maxrate", maxrate, "-bufsize", bufsize] + shared_args[12:]
 
 
 def _hls_output_args(segment_pattern: str, playlist_path: str) -> list[str]:
@@ -201,24 +221,23 @@ def convert_1080p(source: str, movie_id: int) -> str:
 
 
 def convert_all_resolutions(source: str, movie_id: int) -> dict[str, str]:
-    _update_video_tracking(movie_id, "started")
+    _update_video_tracking(movie_id, "started", progress=5)
     try:
-        generated = _generate_hls_outputs(source, movie_id)
+        generated = {}
+        generated["480p"] = convert_480p(source, movie_id)
+        _update_video_tracking(movie_id, "started", progress=30)
+        generated["720p"] = convert_720p(source, movie_id)
+        _update_video_tracking(movie_id, "started", progress=55)
+        generated["1080p"] = convert_1080p(source, movie_id)
+        _update_video_tracking(movie_id, "started", progress=80)
         generated["master"] = _write_master_playlist(movie_id, generated)
+        _update_video_tracking(movie_id, "started", progress=90)
         generated["thumbnail"] = generate_thumbnail(source, movie_id)
-        _update_video_tracking(movie_id, "finished", thumbnail_url=generated["thumbnail"])
+        _update_video_tracking(movie_id, "finished", thumbnail_url=generated["thumbnail"], progress=100)
         return generated
     except Exception:
         _update_video_tracking(movie_id, "failed")
         raise
-
-
-def _generate_hls_outputs(source: str, movie_id: int) -> dict[str, str]:
-    return {
-        "480p": convert_480p(source, movie_id),
-        "720p": convert_720p(source, movie_id),
-        "1080p": convert_1080p(source, movie_id),
-    }
 
 
 def queue_convert_all_resolutions(source: str, movie_id: int, queue_name: str = "default") -> object:
@@ -226,7 +245,22 @@ def queue_convert_all_resolutions(source: str, movie_id: int, queue_name: str = 
     Enqueue the transcoding task so the web request thread is not blocked.
     Returns the RQ job instance.
     """
-    import django_rq
+    if not getattr(settings, "ENABLE_DJANGO_RQ", False):
+        raise QueueUnavailableError("Video queue is disabled.")
+
+    try:
+        import django_rq
+    except ImportError as exc:
+        raise QueueUnavailableError("django_rq is not installed.") from exc
 
     queue = django_rq.get_queue(queue_name)
-    return queue.enqueue(convert_all_resolutions, source, movie_id)
+    job_timeout = int(getattr(settings, "VIDEO_CONVERSION_JOB_TIMEOUT", 7200))
+    try:
+        return queue.enqueue(
+            convert_all_resolutions,
+            source,
+            movie_id,
+            job_timeout=job_timeout,
+        )
+    except Exception as exc:
+        raise QueueUnavailableError("Video queue is unavailable.") from exc

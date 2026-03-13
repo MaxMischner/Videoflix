@@ -222,18 +222,51 @@ function showVideo(id) {
 function startRefreshIntervall() {
     STARTINTERVALL = setInterval(async () => {
         await doRefresh();
-    }, 20 * 60 * 1000);
+    }, 4 * 60 * 1000);
 }
 
 /**
  * Calls the backend to refresh the JWT token.
  */
 async function doRefresh() {
-    await fetch(`${API_BASE_URL}${REFRESH_URL}`, {
+    const response = await fetch(`${API_BASE_URL}${REFRESH_URL}`, {
         method: 'POST', headers: {
             'Content-Type': 'application/json',
         }, credentials: 'include',
     })
+    return response.ok;
+}
+
+let hlsRefreshInFlight = false;
+
+/**
+ * Handles HLS auth failures by refreshing JWT cookies and resuming loading.
+ * @param {Hls} player - Hls.js instance.
+ */
+function attachHlsAuthRecovery(player) {
+    player.on(Hls.Events.ERROR, async (event, data) => {
+        const statusCode = data?.response?.code;
+        const isAuthError = statusCode === 401;
+
+        if (isAuthError && !hlsRefreshInFlight) {
+            hlsRefreshInFlight = true;
+            try {
+                const refreshed = await doRefresh();
+                if (refreshed) {
+                    player.startLoad(-1);
+                    return;
+                }
+            } catch (error) {
+                console.error("Token refresh failed during HLS playback:", error);
+            } finally {
+                hlsRefreshInFlight = false;
+            }
+        }
+
+        if (data.fatal) {
+            console.error("HLS fatal error:", data);
+        }
+    });
 }
 
 /**
@@ -320,11 +353,7 @@ function loadVideo(id, resolution) {
         }, 2000)
     });
 
-    hls.on(Hls.Events.ERROR, (event, data) => {
-        if (data.fatal) {
-            console.error("HLS fatal error:", data);
-        }
-    });
+    attachHlsAuthRecovery(hls);
 }
 
 /**
@@ -463,11 +492,7 @@ function loadVideoInOverlay(id, resolution) {
         }, 2000)
     });
 
-    overlayHls.on(Hls.Events.ERROR, (event, data) => {
-        if (data.fatal) {
-            console.error("HLS fatal error:", data);
-        }
-    });
+    attachHlsAuthRecovery(overlayHls);
 }
 
 /**

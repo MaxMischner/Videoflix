@@ -5,12 +5,22 @@ from django.conf import settings
 from django.http import JsonResponse
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import MediaFile, Video
+from .tasks import QueueUnavailableError as TaskQueueUnavailableError
 from .tasks import queue_convert_all_resolutions
 
 
 AVAILABLE_RESOLUTIONS = ["480p", "720p", "1080p"]
+
+
+class QueueUnavailableError(RuntimeError):
+    """Raised when conversion jobs cannot be enqueued."""
+
+
+class ConversionAlreadyQueuedError(RuntimeError):
+    """Raised when a conversion is already active for a video."""
 
 
 def get_rq_job_status(job_id):
@@ -49,6 +59,32 @@ def auth_error_response(request):
     if status_value == "invalid":
         return JsonResponse({"detail": "Invalid access token."}, status=401)
     return None
+
+
+def _has_valid_refresh_token(request) -> bool:
+    refresh_token = request.COOKIES.get("refresh_token")
+    if not refresh_token:
+        return False
+    try:
+        RefreshToken(refresh_token)
+        return True
+    except TokenError:
+        return False
+
+
+def auth_error_response_for_streaming(request):
+    """Allow HLS chunk requests to continue when access token expires but refresh token is still valid."""
+    access_status = get_access_token_status(request)
+    if access_status == "valid":
+        return None
+    if _has_valid_refresh_token(request):
+        return None
+    if access_status == "missing":
+        return JsonResponse(
+            {"detail": "Authentication credentials were not provided."},
+            status=401,
+        )
+    return JsonResponse({"detail": "Invalid access token."}, status=401)
 
 
 def stream_root() -> Path:
@@ -121,18 +157,48 @@ def latest_media_file(video):
     return MediaFile.objects.filter(video=video).order_by("-created_at").first()
 
 
+def _is_active_job_status(status: str) -> bool:
+    return status in {"queued", "started", "deferred", "scheduled"}
+
+
+def _refresh_conversion_status_from_rq(video) -> str:
+    if not video.last_conversion_job_id:
+        return video.conversion_status
+    job_status = get_rq_job_status(video.last_conversion_job_id)
+    if job_status != video.conversion_status:
+        video.conversion_status = job_status
+        video.save(update_fields=["conversion_status", "conversion_updated_at"])
+    return job_status
+
+
 def queue_conversion_for_video(video, media_file, queue_func=queue_convert_all_resolutions):
-    job = queue_func(
-        media_file.file.path,
-        video.id,
-        queue_name="default",
-    )
+    if video.conversion_status in {"queued", "started"}:
+        current_status = _refresh_conversion_status_from_rq(video)
+        if _is_active_job_status(current_status):
+            raise ConversionAlreadyQueuedError("Video conversion is already in progress.")
+
+    try:
+        job = queue_func(
+            media_file.file.path,
+            video.id,
+            queue_name="default",
+        )
+    except TaskQueueUnavailableError as exc:
+        raise QueueUnavailableError(str(exc)) from exc
+    except Exception as exc:
+        raise QueueUnavailableError("Video queue is unavailable.") from exc
+
+    if not getattr(job, "id", None):
+        raise QueueUnavailableError("Video queue did not return a valid job id.")
+
     video.last_conversion_job_id = job.id
     video.conversion_status = "queued"
+    video.conversion_progress = 0
     video.save(
         update_fields=[
             "last_conversion_job_id",
             "conversion_status",
+            "conversion_progress",
             "conversion_updated_at",
         ]
     )

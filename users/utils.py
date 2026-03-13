@@ -3,7 +3,7 @@ import json
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import send_mail
 from django.http import JsonResponse
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
@@ -69,42 +69,37 @@ def build_activation_link(user):
     return f"{frontend_base_url}{activation_path}?uid={uidb64}&token={token}"
 
 
-def send_multipart_email(subject, text_body, html_body, recipient_email):
-    message = EmailMultiAlternatives(
-        subject=subject,
-        body=text_body,
-        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@videoflix.local"),
-        to=[recipient_email],
-    )
-    message.attach_alternative(html_body, "text/html")
-    sent_count = message.send(fail_silently=False)
-    if sent_count != 1:
-        raise RuntimeError("Email was not sent.")
-
-
-def build_activation_html(activation_link):
+def build_activation_email_html(activation_link):
     return (
         "<html><body style='margin:0;padding:0;background:#f7f7f7;'>"
         "<table role='presentation' width='100%' cellspacing='0' cellpadding='0' style='background:#f7f7f7;padding:24px 0;'>"
         "<tr><td align='center'>"
         "<table role='presentation' width='100%' cellspacing='0' cellpadding='0' style='max-width:600px;background:#ffffff;border-radius:12px;padding:24px;font-family:Arial,sans-serif;color:#1a1a1a;'>"
-        "<tr><td style='font-size:20px;font-weight:bold;padding-bottom:12px;'>Account aktivieren</td></tr>"
-        "<tr><td style='font-size:15px;line-height:1.6;padding-bottom:20px;'>"
-        "Bitte bestaetige deine Registrierung bei Videoflix. Klicke auf den Button, um deinen Account zu aktivieren."
+        "<tr><td style='font-size:20px;font-weight:bold;padding-bottom:12px;'>Willkommen bei Videoflix</td></tr>"
+        "<tr><td style='font-size:15px;line-height:1.6;padding-bottom:16px;'>"
+        "Danke fuer deine Anmeldung. Bitte bestaetige jetzt deine E-Mail-Adresse, damit du dein Konto aktivieren kannst."
         "</td></tr>"
-        f"<tr><td style='padding-bottom:20px;'><a href='{activation_link}' style='display:inline-block;background:#0f766e;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;'>Account aktivieren</a></td></tr>"
+        f"<tr><td style='padding-bottom:20px;'><a href='{activation_link}' style='display:inline-block;background:#0f766e;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;'>E-Mail-Adresse bestaetigen</a></td></tr>"
         f"<tr><td style='font-size:12px;color:#666;word-break:break-all;'>Falls der Button nicht funktioniert, nutze diesen Link:<br>{activation_link}</td></tr>"
         "</table></td></tr></table></body></html>"
     )
 
 
 def send_activation_email(user, activation_link):
-    text_body = (
-        "Bitte bestaetige deine Registrierung bei Videoflix ueber diesen Link:\n"
-        f"{activation_link}"
+    html_message = build_activation_email_html(activation_link)
+    send_mail(
+        subject="Willkommen bei Videoflix - bitte E-Mail bestaetigen",
+        message=(
+            "Hallo und danke fuer deine Anmeldung bei Videoflix.\n\n"
+            "Bitte bestaetige deine E-Mail-Adresse, um dein Konto zu aktivieren:\n"
+            f"{activation_link}\n\n"
+            "Wenn du dich nicht registriert hast, kannst du diese Nachricht ignorieren."
+        ),
+        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@videoflix.local"),
+        recipient_list=[user.email],
+        html_message=html_message,
+        fail_silently=False,
     )
-    html_body = build_activation_html(activation_link)
-    send_multipart_email("Videoflix Account aktivieren", text_body, html_body, user.email)
 
 
 def find_user_by_uidb64(uidb64, error_key, error_message):
@@ -209,11 +204,12 @@ def build_password_reset_html(reset_link):
         "<table role='presentation' width='100%' cellspacing='0' cellpadding='0' style='background:#f7f7f7;padding:24px 0;'>"
         "<tr><td align='center'>"
         "<table role='presentation' width='100%' cellspacing='0' cellpadding='0' style='max-width:600px;background:#ffffff;border-radius:12px;padding:24px;font-family:Arial,sans-serif;color:#1a1a1a;'>"
-        "<tr><td style='font-size:20px;font-weight:bold;padding-bottom:12px;'>Passwort zuruecksetzen</td></tr>"
+        "<tr><td style='font-size:20px;font-weight:bold;padding-bottom:12px;'>Passwort fuer Videoflix zuruecksetzen</td></tr>"
         "<tr><td style='font-size:15px;line-height:1.6;padding-bottom:20px;'>"
-        "Du hast eine Passwort-Zuruecksetzung angefordert. Klicke auf den Button, um ein neues Passwort festzulegen."
+        "Wir haben eine Anfrage zum Zuruecksetzen deines Passworts erhalten. Klicke auf den Button, um ein neues Passwort festzulegen."
         "</td></tr>"
         f"<tr><td style='padding-bottom:20px;'><a href='{reset_link}' style='display:inline-block;background:#0f766e;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px;'>Neues Passwort festlegen</a></td></tr>"
+        "<tr><td style='font-size:13px;color:#444;padding-bottom:16px;'>Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren. Dein Konto bleibt in diesem Fall unveraendert.</td></tr>"
         f"<tr><td style='font-size:12px;color:#666;word-break:break-all;'>Falls der Button nicht funktioniert, nutze diesen Link:<br>{reset_link}</td></tr>"
         "</table></td></tr></table></body></html>"
     )
@@ -221,11 +217,20 @@ def build_password_reset_html(reset_link):
 
 def send_password_reset_email(user, reset_link):
     html_message = build_password_reset_html(reset_link)
-    text_body = (
-        "You requested a password reset. Use the following link to set a new password:\n"
-        f"{reset_link}"
+    send_mail(
+        subject="Videoflix - Passwort zuruecksetzen",
+        message=(
+            "Hallo,\n\n"
+            "wir haben eine Anfrage zum Zuruecksetzen deines Videoflix-Passworts erhalten.\n"
+            "Nutze den folgenden Link, um ein neues Passwort festzulegen:\n"
+            f"{reset_link}\n\n"
+            "Wenn du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren."
+        ),
+        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@videoflix.local"),
+        recipient_list=[user.email],
+        html_message=html_message,
+        fail_silently=False,
     )
-    send_multipart_email("Videoflix Password Reset", text_body, html_message, user.email)
 
 
 def parse_password_confirm_payload(payload):

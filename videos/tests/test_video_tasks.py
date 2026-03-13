@@ -35,7 +35,33 @@ class VideoTasksTests(TestCase):
 
         video.refresh_from_db()
         self.assertEqual(video.conversion_status, "finished")
+        self.assertEqual(video.conversion_progress, 100)
         self.assertIn(f"/media/{video.id}/thumbnail.jpg", video.thumbnail_url)
+
+    @override_settings(
+        VIDEO_STREAM_ROOT=tempfile.gettempdir(),
+        MEDIA_ROOT=tempfile.gettempdir(),
+        MEDIA_URL="/media/",
+        PUBLIC_BASE_URL="http://127.0.0.1:8000",
+    )
+    @patch("videos.tasks.subprocess.run")
+    def test_convert_generates_thumbnail_when_initial_thumbnail_missing(self, run_mock):
+        run_mock.return_value = subprocess.CompletedProcess(args=["ffmpeg"], returncode=0, stdout="", stderr="")
+
+        video = Video.objects.create(
+            title="Task Test No Thumb",
+            description="Task test without initial thumbnail",
+            category="Drama",
+        )
+
+        source = str(Path(tempfile.gettempdir()) / "source.mp4")
+        result = convert_all_resolutions(source, video.id)
+
+        self.assertIn("thumbnail", result)
+        video.refresh_from_db()
+        self.assertEqual(video.conversion_status, "finished")
+        self.assertEqual(video.conversion_progress, 100)
+        self.assertTrue(video.thumbnail_url.endswith(f"/media/{video.id}/thumbnail.jpg"))
 
     @override_settings(VIDEO_STREAM_ROOT=tempfile.gettempdir())
     @patch("videos.tasks.convert_480p", side_effect=RuntimeError("ffmpeg failed"))

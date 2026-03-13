@@ -7,7 +7,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from .models import MediaFile
-from .tasks import queue_convert_all_resolutions
+from .utils import ConversionAlreadyQueuedError, QueueUnavailableError, queue_conversion_for_video
 
 
 logger = logging.getLogger(__name__)
@@ -19,6 +19,8 @@ def _is_valid_media_file_instance(instance) -> bool:
 
 def _can_queue_video(instance) -> bool:
     if not getattr(settings, "ENABLE_VIDEO_QUEUE", True):
+        return False
+    if not getattr(settings, "ENABLE_DJANGO_RQ", False):
         return False
     if not instance.video_id:
         logger.warning("MediaFile %s has no video relation; skipping HLS conversion enqueue.", instance.pk)
@@ -38,7 +40,11 @@ def queue_video_conversion(sender, instance, created, **kwargs):
     if not _can_queue_video(instance):
         return
     try:
-        queue_convert_all_resolutions(instance.file.path, instance.video_id, queue_name="default")
+        queue_conversion_for_video(instance.video, instance)
+    except ConversionAlreadyQueuedError:
+        logger.info("Conversion already queued for video %s; skipping duplicate enqueue.", instance.video_id)
+    except QueueUnavailableError as exc:
+        logger.warning("Could not enqueue video conversion task: %s", exc)
     except Exception as exc:
         logger.warning("Could not enqueue video conversion task: %s", exc)
 

@@ -5,10 +5,11 @@ class Video(models.Model):
 	created_at = models.DateTimeField(auto_now_add=True)
 	title = models.CharField(max_length=255)
 	description = models.TextField()
-	thumbnail_url = models.URLField(max_length=500)
+	thumbnail_url = models.URLField(max_length=500, blank=True, default="")
 	category = models.CharField(max_length=120)
 	last_conversion_job_id = models.CharField(max_length=128, null=True, blank=True)
 	conversion_status = models.CharField(max_length=32, default="not_requested")
+	conversion_progress = models.PositiveSmallIntegerField(default=0)
 	conversion_updated_at = models.DateTimeField(auto_now=True)
 
 	def __str__(self):

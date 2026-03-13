@@ -6,6 +6,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
 from videos.models import MediaFile, Video
+from videos.utils import ConversionAlreadyQueuedError, QueueUnavailableError, queue_conversion_for_video
 
 
 class VideoConvertTriggerEndpointTests(TestCase):
@@ -83,3 +84,64 @@ class VideoConvertTriggerEndpointTests(TestCase):
         self.video.refresh_from_db()
         self.assertEqual(self.video.last_conversion_job_id, "job-123")
         self.assertEqual(self.video.conversion_status, "queued")
+        self.assertEqual(self.video.conversion_progress, 0)
+
+    @patch("videos.views.queue_conversion_for_video", side_effect=ConversionAlreadyQueuedError("already"))
+    def test_trigger_returns_409_when_conversion_already_running(self, _):
+        self._authenticate()
+        MediaFile.objects.create(
+            video=self.video,
+            file=SimpleUploadedFile("source.mp4", b"fake-video"),
+        )
+
+        response = self.client.post(self.convert_url)
+
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.json(), {"detail": "Video conversion is already in progress."})
+
+    @patch("videos.views.queue_conversion_for_video", side_effect=QueueUnavailableError("down"))
+    def test_trigger_returns_503_when_queue_unavailable(self, _):
+        self._authenticate()
+        MediaFile.objects.create(
+            video=self.video,
+            file=SimpleUploadedFile("source.mp4", b"fake-video"),
+        )
+
+        response = self.client.post(self.convert_url)
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json(), {"detail": "Video conversion queue is unavailable."})
+
+
+class QueueConversionHelperTests(TestCase):
+    def setUp(self):
+        self.video = Video.objects.create(
+            title="Queue Helper Test",
+            description="Queue helper test description",
+            thumbnail_url="http://example.com/media/thumbnail/image.jpg",
+            category="Drama",
+            conversion_status="queued",
+            last_conversion_job_id="job-old",
+        )
+        self.media_file = MediaFile.objects.create(
+            video=self.video,
+            file=SimpleUploadedFile("source.mp4", b"fake-video"),
+        )
+
+    @patch("videos.utils.get_rq_job_status", return_value="started")
+    def test_helper_blocks_requeue_when_job_is_still_active(self, _status_mock):
+        with self.assertRaises(ConversionAlreadyQueuedError):
+            queue_conversion_for_video(self.video, self.media_file, queue_func=Mock())
+
+    @patch("videos.utils.get_rq_job_status", return_value="finished")
+    def test_helper_requeues_when_previous_job_finished(self, _status_mock):
+        new_job = Mock()
+        new_job.id = "job-new"
+
+        result = queue_conversion_for_video(self.video, self.media_file, queue_func=Mock(return_value=new_job))
+
+        self.assertEqual(result.id, "job-new")
+        self.video.refresh_from_db()
+        self.assertEqual(self.video.last_conversion_job_id, "job-new")
+        self.assertEqual(self.video.conversion_status, "queued")
+        self.assertEqual(self.video.conversion_progress, 0)

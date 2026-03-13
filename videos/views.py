@@ -5,7 +5,10 @@ from .models import Video
 from .tasks import queue_convert_all_resolutions
 from .utils import (
     AVAILABLE_RESOLUTIONS,
+    ConversionAlreadyQueuedError,
+    QueueUnavailableError,
     auth_error_response,
+    auth_error_response_for_streaming,
     build_manifest_path,
     build_segment_path,
     dashboard_payload,
@@ -63,7 +66,7 @@ def video_playback(request, movie_id):
 
 @require_GET
 def video_manifest(request, movie_id, resolution):
-    auth_error = auth_error_response(request)
+    auth_error = auth_error_response_for_streaming(request)
     if auth_error:
         return auth_error
     if not Video.objects.filter(pk=movie_id).exists():
@@ -81,7 +84,7 @@ def video_manifest(request, movie_id, resolution):
 
 @require_GET
 def video_segment(request, movie_id, resolution, segment):
-    auth_error = auth_error_response(request)
+    auth_error = auth_error_response_for_streaming(request)
     if auth_error:
         return auth_error
     if not Video.objects.filter(pk=movie_id).exists():
@@ -104,11 +107,17 @@ def trigger_video_conversion(request, movie_id):
     media_file = latest_media_file(video)
     if not media_file or not media_file.file:
         return JsonResponse({"detail": "Source media file not found."}, status=404)
-    job = queue_conversion_for_video(
-        video,
-        media_file,
-        queue_func=queue_convert_all_resolutions,
-    )
+    try:
+        job = queue_conversion_for_video(
+            video,
+            media_file,
+            queue_func=queue_convert_all_resolutions,
+        )
+    except ConversionAlreadyQueuedError:
+        return JsonResponse({"detail": "Video conversion is already in progress."}, status=409)
+    except QueueUnavailableError:
+        return JsonResponse({"detail": "Video conversion queue is unavailable."}, status=503)
+
     return JsonResponse(
         {"detail": "Video conversion queued.", "job_id": job.id, "video_id": video.id},
         status=202,
@@ -125,7 +134,12 @@ def video_conversion_status(request, movie_id):
         return JsonResponse({"detail": "Video not found."}, status=404)
     if not video.last_conversion_job_id:
         return JsonResponse(
-            {"video_id": video.id, "job_id": None, "status": video.conversion_status},
+            {
+                "video_id": video.id,
+                "job_id": None,
+                "status": video.conversion_status,
+                "progress": video.conversion_progress,
+            },
             status=200,
         )
     job_status = _get_rq_job_status(video.last_conversion_job_id)
@@ -137,6 +151,7 @@ def video_conversion_status(request, movie_id):
             "video_id": video.id,
             "job_id": video.last_conversion_job_id,
             "status": job_status,
+            "progress": video.conversion_progress,
         },
         status=200,
     )

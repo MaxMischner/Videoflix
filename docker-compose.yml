@@ -1,7 +1,15 @@
 services:
 
+  frontend:
+    image: nginx:alpine
+    container_name: videoflix_frontend
+    ports:
+      - "5500:80"
+    volumes:
+      - ./project.Videoflix:/usr/share/nginx/html:ro
+
   db:
-    image: postgres:latest
+    image: postgres:17
     container_name: videoflix_database
     environment:
       POSTGRES_DB: ${DB_NAME}

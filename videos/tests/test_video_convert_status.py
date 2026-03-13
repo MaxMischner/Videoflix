@@ -61,6 +61,7 @@ class VideoConvertStatusEndpointTests(TestCase):
         self.assertEqual(response.json()["video_id"], self.video.id)
         self.assertIsNone(response.json()["job_id"])
         self.assertEqual(response.json()["status"], "not_requested")
+        self.assertEqual(response.json()["progress"], 0)
 
     @patch("videos.views._get_rq_job_status")
     def test_status_updates_video_status_from_rq(self, rq_status_mock):
@@ -76,6 +77,7 @@ class VideoConvertStatusEndpointTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["job_id"], "job-123")
         self.assertEqual(response.json()["status"], "finished")
+        self.assertEqual(response.json()["progress"], 0)
 
         self.video.refresh_from_db()
         self.assertEqual(self.video.conversion_status, "finished")
