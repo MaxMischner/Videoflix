@@ -4,3 +4,7 @@ claud/
 
 # Frontend folder
 frontend/
+
+# Environment variables
+.env
+.env.*
