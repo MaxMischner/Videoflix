@@ -1,0 +1,6 @@
+# Local AI tooling
+.claude/
+claud/
+
+# Frontend folder
+frontend/

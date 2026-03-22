@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Activate your Videoflix account</title>
+  <style>
+    body { margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif; }
+    .wrapper { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; }
+    .header { padding: 32px; text-align: center; }
+    .logo { font-size: 28px; font-weight: bold; color: #3b0fd1; letter-spacing: 1px; }
+    .logo span { color: #3b0fd1; margin-right: 6px; }
+    .content { padding: 32px 40px; color: #333333; font-size: 15px; line-height: 1.6; }
+    .content a { color: #3b0fd1; }
+    .btn-wrapper { text-align: left; margin: 28px 0; }
+    .btn { display: inline-block; background-color: #1a56ff; color: #ffffff !important; text-decoration: none;
+           padding: 13px 28px; border-radius: 6px; font-size: 15px; font-weight: bold; }
+    .footer { padding: 24px 40px; font-size: 13px; color: #888888; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <div class="logo"><span>&#9658;</span>VIDEOFLIX</div>
+    </div>
+    <div class="content">
+      <p>Dear {{ user.email }},</p>
+      <p>
+        Thank you for registering with <a href="#">Videoflix</a>.
+        To complete your registration and verify your email address, please click the link below:
+      </p>
+      <div class="btn-wrapper">
+        <a href="{{ activation_url }}" class="btn">Activate account</a>
+      </div>
+      <p>If the button does not work, copy this link into your browser:</p>
+      <p style="word-break: break-all; color: #3b0fd1;">{{ activation_url }}</p>
+      <p>If you did not create an account with us, please disregard this email.</p>
+      <p>Best regards,<br/>Your Videoflix Team.</p>
+    </div>
+    <div class="footer">
+      This link is valid for 24 hours. If you have any questions, contact our support team.
+    </div>
+  </div>
+</body>
+</html>
