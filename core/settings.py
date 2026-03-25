@@ -2,24 +2,10 @@
 Django settings for Videoflix backend.
 """
 import os
-import ssl
 from pathlib import Path
 from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Fix SSL certificate verification on Windows (local dev only)
-# In Docker (Linux) this is not needed — Linux has system certificates
-if os.environ.get('USE_SQLITE', 'False') == 'True':
-    _original_create_context = ssl.create_default_context
-
-    def _unverified_ssl_context(*args, **kwargs):
-        ctx = _original_create_context(*args, **kwargs)
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
-        return ctx
-
-    ssl.create_default_context = _unverified_ssl_context
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me-in-production')
 
@@ -47,9 +33,7 @@ INSTALLED_APPS = [
     'videos',
 ]
 
-# django_rq requires Redis — only enable when not in local SQLite mode
-if os.environ.get('USE_SQLITE', 'False') != 'True':
-    INSTALLED_APPS.append('django_rq')
+INSTALLED_APPS.append('django_rq')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -83,24 +67,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-if os.environ.get('USE_SQLITE', 'False') == 'True':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'videoflix'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('DB_NAME', 'videoflix'),
-            'USER': os.environ.get('DB_USER', 'postgres'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
-            'HOST': os.environ.get('DB_HOST', 'localhost'),
-            'PORT': os.environ.get('DB_PORT', '5432'),
-        }
-    }
+}
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
@@ -157,28 +133,21 @@ SIMPLE_JWT = {
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:5500,http://127.0.0.1:5500,http://localhost:3000,http://127.0.0.1:3000'
+    'http://localhost:5500,http://127.0.0.1:5500'
 ).split(',')
 
 # Redis
-REDIS_URL = os.environ.get('REDIS_LOCATION', os.environ.get('REDIS_URL', 'redis://localhost:6379'))
+REDIS_URL = os.environ.get('REDIS_LOCATION', 'redis://localhost:6379')
 
-if os.environ.get('USE_SQLITE', 'False') == 'True':
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        }
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
     }
-else:
-    CACHES = {
-        'default': {
-            'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': REDIS_URL,
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            },
-        }
-    }
+}
 
 # Django RQ
 RQ_QUEUES = {

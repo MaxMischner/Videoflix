@@ -1,129 +1,157 @@
 # Videoflix Backend
 
-Django REST Framework Backend für die Videoflix-Plattform. Unterstützt Video-Upload, HLS-Streaming, JWT-Authentifizierung via HttpOnly Cookies und Hintergrundverarbeitung mit FFMPEG.
+Django REST Framework backend for the Videoflix platform. Supports video upload, HLS streaming, JWT authentication via HttpOnly cookies, and background processing with FFMPEG.
 
-## Technologie-Stack
+## Tech Stack
 
-| Technologie | Zweck |
+| Technology | Purpose |
 |---|---|
 | Django 5.2 + DRF | REST API |
-| PostgreSQL | Hauptdatenbank |
-| Redis | Cache + RQ Job Queue |
-| Django-RQ | Hintergrund-Tasks (FFMPEG) |
-| FFMPEG | Video → HLS Konvertierung |
-| SimpleJWT | JWT-Authentifizierung |
-| WhiteNoise | Static Files |
-| Gunicorn | WSGI Server |
+| PostgreSQL | Primary database |
+| Redis | Cache + RQ job queue |
+| Django-RQ | Background tasks (FFMPEG) |
+| FFMPEG | Video → HLS conversion |
+| SimpleJWT | JWT authentication |
+| WhiteNoise | Static files |
+| Gunicorn | WSGI server |
 
-## Schnellstart mit Docker
+## Quick Start with Docker
 
-### 1. `.env` Datei anlegen
+### 1. Create `.env` file
 
 ```bash
 cp .env.template .env
 ```
 
-> ⚠️ **Wichtig:** Die `.env` wird nicht mit dem Repository ausgeliefert und muss manuell eingerichtet werden. Ohne korrekte E-Mail-Konfiguration schlägt die Registrierung fehl, da keine Aktivierungs-E-Mail versendet werden kann.
+> ⚠️ **Important:** The `.env` file is not included in the repository and must be configured manually. Without valid email configuration, registration will fail because no activation email can be sent.
 
-`.env` anpassen — mindestens diese Felder ausfüllen:
+Edit `.env` and fill in at least these required fields:
 
 ```env
-SECRET_KEY=dein-geheimer-schluessel
+# Django
+SECRET_KEY=your-secret-key
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+CSRF_TRUSTED_ORIGINS=http://localhost:5500,http://127.0.0.1:5500
+
+# PostgreSQL
 DB_NAME=videoflix
 DB_USER=videoflix_user
-DB_PASSWORD=sicheres-passwort
+DB_PASSWORD=your-secure-password
+DB_HOST=db
+DB_PORT=5432
 
-# Echte SMTP-Zugangsdaten erforderlich — Platzhalter funktionieren nicht!
-# Für Gmail: App-Passwort unter https://myaccount.google.com/apppasswords erstellen
+# Redis
+REDIS_HOST=redis
+REDIS_LOCATION=redis://redis:6379
+REDIS_PORT=6379
+REDIS_DB=0
+
+# Email (real SMTP credentials required — placeholders will not work!)
+# For Gmail: create an app password at https://myaccount.google.com/apppasswords
 EMAIL_HOST=smtp.gmail.com
-EMAIL_HOST_USER=deine@email.com
-EMAIL_HOST_PASSWORD=dein-app-passwort
+EMAIL_PORT=587
+EMAIL_HOST_USER=your@email.com
+EMAIL_HOST_PASSWORD=your-app-password
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
+DEFAULT_FROM_EMAIL=your@email.com
 
+# Frontend URL used in email links
 FRONTEND_URL=http://127.0.0.1:5500
 
+# CORS
+CORS_ALLOWED_ORIGINS=http://localhost:5500,http://127.0.0.1:5500
+
+# Cookies
+COOKIE_SECURE=False
+COOKIE_SAMESITE=Lax
+
+# Superuser (created automatically on Docker start)
+DJANGO_SUPERUSER_USERNAME=admin
 DJANGO_SUPERUSER_EMAIL=admin@example.com
 DJANGO_SUPERUSER_PASSWORD=adminpassword
 ```
 
-### 2. Docker starten
+### 2. Start Docker
 
 ```bash
 docker-compose up --build
 ```
 
-Der Container führt beim Start automatisch aus:
+The container automatically runs on startup:
 - `collectstatic`
 - `makemigrations` + `migrate`
-- Superuser erstellen (aus `.env`)
-- RQ Worker starten (Hintergrund)
-- Gunicorn starten auf Port 8000
+- Create superuser (from `.env`)
+- Start RQ worker (background)
+- Start Gunicorn on port 8000
 
-### 3. Admin-Panel
+### 3. Admin Panel
 
 ```
 http://localhost:8000/admin/
 ```
 
-Dort können Videos hochgeladen werden. Nach dem Upload startet automatisch die FFMPEG-Konvertierung im Hintergrund.
+Videos can be uploaded here. After upload, FFMPEG conversion starts automatically in the background.
 
 ---
 
 ## API Endpoints
 
-### Authentifizierung
+### Authentication
 
-| Methode | URL | Beschreibung | Auth |
+| Method | URL | Description | Auth |
 |---|---|---|---|
-| POST | `/api/register/` | Registrierung | Nein |
-| GET | `/api/activate/<uid>/<token>/` | Account aktivieren | Nein |
-| POST | `/api/login/` | Login (setzt Cookies) | Nein |
+| POST | `/api/register/` | Registration | No |
+| GET | `/api/activate/<uid>/<token>/` | Activate account | No |
+| POST | `/api/login/` | Login (sets cookies) | No |
 | POST | `/api/logout/` | Logout | Cookie |
-| POST | `/api/token/refresh/` | Token erneuern | Cookie |
-| POST | `/api/password_reset/` | Reset-Mail senden | Nein |
-| POST | `/api/password_confirm/<uid>/<token>/` | Neues Passwort | Nein |
+| POST | `/api/token/refresh/` | Refresh token | Cookie |
+| POST | `/api/password_reset/` | Send reset email | No |
+| POST | `/api/password_confirm/<uid>/<token>/` | Set new password | No |
 
 ### Videos
 
-| Methode | URL | Beschreibung | Auth |
+| Method | URL | Description | Auth |
 |---|---|---|---|
-| GET | `/api/video/` | Alle Videos | JWT |
-| GET | `/api/video/<id>/<res>/index.m3u8` | HLS Playlist | JWT |
-| GET | `/api/video/<id>/<res>/<segment>/` | HLS Segment | JWT |
+| GET | `/api/video/` | All videos | JWT |
+| GET | `/api/video/<id>/<res>/index.m3u8` | HLS playlist | JWT |
+| GET | `/api/video/<id>/<res>/<segment>/` | HLS segment | JWT |
 
 ---
 
-## Authentifizierung (HttpOnly Cookies)
+## Authentication (HttpOnly Cookies)
 
-Das Backend nutzt JWT-Token die als **HttpOnly Cookies** gesetzt werden — kein LocalStorage, kein Bearer-Header.
+The backend uses JWT tokens set as **HttpOnly cookies** — no LocalStorage, no Bearer header.
 
-- `access_token` Cookie: 30 Minuten gültig
-- `refresh_token` Cookie: 7 Tage gültig, wird bei Refresh rotiert und blacklistet
+- `access_token` cookie: valid for 30 minutes
+- `refresh_token` cookie: valid for 7 days, rotated and blacklisted on refresh
 
 ---
 
-## Video-Processing Pipeline
+## Video Processing Pipeline
 
 ```
-Admin Upload im Django Admin
+Admin upload in Django Admin
         ↓
 Django Signal (post_save)
         ↓
 Django-RQ enqueue → Redis Queue
         ↓
-RQ Worker (Hintergrundprozess)
+RQ Worker (background process)
         ↓
-FFMPEG → 480p / 720p / 1080p HLS (.m3u8 + .ts Segmente)
-FFMPEG → Thumbnail (Frame bei 2s)
+FFMPEG → 480p / 720p / 1080p HLS (.m3u8 + .ts segments)
+FFMPEG → Thumbnail (frame at 2s)
         ↓
 Video.processing_status = 'done'
 ```
 
-### HLS Dateistruktur
+### HLS File Structure
 
 ```
 media/
-├── uploads/videos/     ← Original-Upload
-├── thumbnails/         ← Auto-generiert durch FFMPEG
+├── uploads/videos/     ← original upload
+├── thumbnails/         ← auto-generated by FFMPEG
 └── hls/
     └── {video_id}/
         ├── 480p/  index.m3u8 + 000.ts, 001.ts, ...
@@ -133,67 +161,67 @@ media/
 
 ---
 
-## Lokale Entwicklung (ohne Docker)
+## Local Development (without Docker)
 
 ```bash
-# Virtuelle Umgebung
+# Virtual environment
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Abhängigkeiten
+# Dependencies
 pip install -r requirements.txt
 
-# .env laden (oder Umgebungsvariablen setzen)
+# Configure .env
 cp .env.template .env
-# DB_HOST=localhost setzen
+# Set DB_HOST=localhost in .env
 
-# Migrationen
+# Migrations
 python manage.py migrate
 
-# Server starten
+# Start server
 python manage.py runserver
 
-# RQ Worker (separates Terminal)
+# RQ Worker (separate terminal)
 python manage.py rqworker default
 ```
 
-### E-Mail lokal testen
+### Testing email locally
 
-In `.env` setzen:
+Add this to `.env`:
 ```env
 EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
 ```
-→ E-Mails erscheinen dann im Terminal statt versendet zu werden.
+→ Emails will appear in the terminal instead of being sent.
 
 ---
 
-## Projektstruktur
+## Project Structure
 
 ```
 Videoflix/
-├── core/                   ← Django-Projekt
+├── core/                   ← Django project
 │   ├── settings.py
 │   ├── urls.py
 │   └── wsgi.py
-├── users/                  ← Auth-App
-│   ├── models.py           ← CustomUser (email-basiert)
-│   ├── views.py            ← Auth Views
-│   ├── utils.py            ← E-Mail, Token, Cookie Hilfsfunktionen
+├── users/                  ← Auth app
+│   ├── models.py           ← CustomUser (email-based)
+│   ├── views.py            ← Auth views
+│   ├── utils.py            ← Email, token, cookie helpers
 │   ├── serializers.py
 │   ├── authentication.py   ← CookieJWTAuthentication
 │   └── urls.py
-├── videos/                 ← Video-App
-│   ├── models.py           ← Video Model
-│   ├── views.py            ← HLS Serving Views
-│   ├── tasks.py            ← RQ Background Tasks
+├── videos/                 ← Video app
+│   ├── models.py           ← Video model
+│   ├── views.py            ← HLS serving views
+│   ├── tasks.py            ← RQ background tasks
 │   ├── signals.py          ← post_save → enqueue
-│   ├── utils.py            ← FFMPEG Hilfsfunktionen
+│   ├── utils.py            ← FFMPEG helpers
 │   └── urls.py
 ├── templates/
-│   └── emails/             ← HTML E-Mail Templates
+│   └── emails/             ← HTML email templates
 ├── manage.py
 ├── requirements.txt
-├── .env.example
+├── .env.template
 ├── backend.Dockerfile
 ├── backend.entrypoint.sh
 └── docker-compose.yml
