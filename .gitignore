@@ -4,3 +4,13 @@ frontend/
 # Environment variables
 .env
 .env.*
+
+# Local AI tooling
+.claude/
+
+# Unwanted local folders
+Neuer Ordner/
+
+# Python cache
+__pycache__/
+*.pyc
