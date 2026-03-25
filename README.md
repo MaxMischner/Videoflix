@@ -20,8 +20,10 @@ Django REST Framework Backend für die Videoflix-Plattform. Unterstützt Video-U
 ### 1. `.env` Datei anlegen
 
 ```bash
-cp .env.example .env
+cp .env.template .env
 ```
+
+> ⚠️ **Wichtig:** Die `.env` wird nicht mit dem Repository ausgeliefert und muss manuell eingerichtet werden. Ohne korrekte E-Mail-Konfiguration schlägt die Registrierung fehl, da keine Aktivierungs-E-Mail versendet werden kann.
 
 `.env` anpassen — mindestens diese Felder ausfüllen:
 
@@ -30,11 +32,13 @@ SECRET_KEY=dein-geheimer-schluessel
 DB_NAME=videoflix
 DB_USER=videoflix_user
 DB_PASSWORD=sicheres-passwort
-DB_HOST=db
-REDIS_URL=redis://redis:6379
 
+# Echte SMTP-Zugangsdaten erforderlich — Platzhalter funktionieren nicht!
+# Für Gmail: App-Passwort unter https://myaccount.google.com/apppasswords erstellen
+EMAIL_HOST=smtp.gmail.com
 EMAIL_HOST_USER=deine@email.com
 EMAIL_HOST_PASSWORD=dein-app-passwort
+
 FRONTEND_URL=http://127.0.0.1:5500
 
 DJANGO_SUPERUSER_EMAIL=admin@example.com
@@ -140,7 +144,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # .env laden (oder Umgebungsvariablen setzen)
-cp .env.example .env
+cp .env.template .env
 # DB_HOST=localhost setzen
 
 # Migrationen

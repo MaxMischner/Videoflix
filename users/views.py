@@ -26,9 +26,13 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response({'detail': 'Please check your inputs and try again.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         user = serializer.save()
-        send_activation_email(user, request)
+        try:
+            send_activation_email(user, request)
+        except Exception:
+            user.delete()
+            return Response({'detail': 'Registration failed: could not send activation email. Please try again later.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         token = str(RefreshToken.for_user(user).access_token)
         return Response({'user': UserSerializer(user).data, 'token': token}, status=status.HTTP_201_CREATED)
 
