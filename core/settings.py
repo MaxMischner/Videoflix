@@ -4,6 +4,9 @@ Django settings for Videoflix backend.
 import os
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -146,19 +149,24 @@ CACHES = {
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         },
+        'KEY_PREFIX': 'videoflix',
     }
 }
 
 # Django RQ
 RQ_QUEUES = {
     'default': {
-        'URL': REDIS_URL,
-        'DEFAULT_TIMEOUT': 3600,
+        'HOST': os.environ.get('REDIS_HOST', 'redis'),
+        'PORT': os.environ.get('REDIS_PORT', 6379),
+        'DB': os.environ.get('REDIS_DB', 0),
+        'DEFAULT_TIMEOUT': 900,
+        'REDIS_CLIENT_KWARGS': {},
     },
 }
 
 # Email
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_TIMEOUT = 10
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
