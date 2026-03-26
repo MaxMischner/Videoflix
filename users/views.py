@@ -31,8 +31,7 @@ class RegisterView(APIView):
         try:
             send_activation_email(user, request)
         except Exception:
-            user.delete()
-            return Response({'detail': 'Registration failed: could not send activation email. Please try again later.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            pass
         token = str(RefreshToken.for_user(user).access_token)
         return Response({'user': UserSerializer(user).data, 'token': token}, status=status.HTTP_201_CREATED)
 

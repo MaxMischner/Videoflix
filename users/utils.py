@@ -1,10 +1,14 @@
+import logging
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
+from django.core.mail import BadHeaderError, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -30,13 +34,20 @@ def send_activation_email(user, request):
         'user': user,
         'activation_url': activation_url,
     })
-    send_mail(
-        subject='Activate your Videoflix account',
-        message=f'Activate your account: {activation_url}',
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        html_message=html_message,
-    )
+    from_email = settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER
+    try:
+        msg = EmailMultiAlternatives(
+            subject='Activate your Videoflix account',
+            body=f'Activate your account: {activation_url}',
+            from_email=from_email,
+            to=[user.email],
+        )
+        msg.attach_alternative(html_message, 'text/html')
+        msg.send(fail_silently=False)
+    except BadHeaderError:
+        logger.error('Activation email failed: invalid header for user %s', user.email)
+    except Exception as e:
+        logger.error('Activation email failed for user %s: %s', user.email, str(e))
 
 
 def activate_user(uidb64, token):
@@ -64,13 +75,20 @@ def send_password_reset_email(email, request):
         'user': user,
         'reset_url': reset_url,
     })
-    send_mail(
-        subject='Reset your Videoflix password',
-        message=f'Reset your password: {reset_url}',
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        html_message=html_message,
-    )
+    from_email = settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER
+    try:
+        msg = EmailMultiAlternatives(
+            subject='Reset your Videoflix password',
+            body=f'Reset your password: {reset_url}',
+            from_email=from_email,
+            to=[user.email],
+        )
+        msg.attach_alternative(html_message, 'text/html')
+        msg.send(fail_silently=False)
+    except BadHeaderError:
+        logger.error('Password reset email failed: invalid header for user %s', user.email)
+    except Exception as e:
+        logger.error('Password reset email failed for user %s: %s', user.email, str(e))
 
 
 def confirm_password_reset(uidb64, token, new_password):

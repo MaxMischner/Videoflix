@@ -187,11 +187,28 @@ python manage.py rqworker default
 
 ### Testing email locally
 
-Add this to `.env`:
+To print emails to the terminal instead of sending them, add this to `.env`:
 ```env
 EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
 ```
-→ Emails will appear in the terminal instead of being sent.
+
+### Troubleshooting email
+
+Registration always returns `201` even if the activation email cannot be sent — the account is created regardless. If a user does not receive the activation email, check the backend logs for SMTP errors:
+
+```bash
+docker compose logs web
+```
+
+Look for lines like:
+```
+Email sending failed for user@example.com: [Errno 111] Connection refused
+```
+
+Common causes:
+- Invalid SMTP credentials in `.env`
+- Email provider requires an app password (e.g. Gmail, web.de)
+- SMTP port blocked by firewall or provider
 
 ---
 
