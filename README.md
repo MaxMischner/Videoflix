@@ -75,8 +75,17 @@ DJANGO_SUPERUSER_PASSWORD=adminpassword
 
 ### 2. Start Docker
 
+> ⚠️ **Important:** Always use `--build` on first setup and after code changes. If you have run this project before, clear old volumes first to avoid database conflicts:
+
 ```bash
-docker-compose up --build
+docker compose down -v        # remove old volumes (deletes all data)
+docker compose up --build
+```
+
+If this is a **first-time setup** with no previous containers:
+
+```bash
+docker compose up --build
 ```
 
 The container automatically runs on startup:
@@ -191,6 +200,25 @@ To print emails to the terminal instead of sending them, add this to `.env`:
 ```env
 EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
 ```
+
+### Troubleshooting migrations
+
+If you see this error on startup:
+```
+django.db.migrations.exceptions.InconsistentMigrationHistory:
+Migration admin.0001_initial is applied before its dependency users.0001_initial
+```
+
+This means Docker is reusing an old PostgreSQL volume with stale migration data. Fix:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+> ⚠️ `-v` deletes all volumes including the database. All data will be lost.
+
+---
 
 ### Troubleshooting email
 

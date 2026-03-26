@@ -13,6 +13,30 @@ done
 
 echo "PostgreSQL ist bereit - fahre fort..."
 
+# Fix potential migration inconsistency (admin applied before users)
+python manage.py shell << 'PYEOF'
+from django.db import connection
+from datetime import datetime, timezone
+try:
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT to_regclass('django_migrations')")
+        if cursor.fetchone()[0]:
+            cursor.execute("SELECT COUNT(*) FROM django_migrations WHERE app='admin'")
+            admin_count = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM django_migrations WHERE app='users'")
+            users_count = cursor.fetchone()[0]
+            if admin_count > 0 and users_count == 0:
+                cursor.execute("SELECT to_regclass('users_customuser')")
+                if cursor.fetchone()[0]:
+                    cursor.execute(
+                        "INSERT INTO django_migrations (app, name, applied) VALUES ('users', '0001_initial', %s)",
+                        [datetime.now(timezone.utc)]
+                    )
+                    print("Fixed: recorded missing users migration (table already existed).")
+except Exception as e:
+    print(f"Migration pre-check skipped: {e}")
+PYEOF
+
 # Deine originalen Befehle (ohne wait_for_db)
 python manage.py collectstatic --noinput
 python manage.py makemigrations
