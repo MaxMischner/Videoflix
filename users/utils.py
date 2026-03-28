@@ -34,7 +34,7 @@ def send_activation_email(user, request):
         'user': user,
         'activation_url': activation_url,
     })
-    from_email = settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER
+    from_email = settings.DEFAULT_FROM_EMAIL
     try:
         msg = EmailMultiAlternatives(
             subject='Activate your Videoflix account',
@@ -46,8 +46,10 @@ def send_activation_email(user, request):
         msg.send(fail_silently=False)
     except BadHeaderError:
         logger.error('Activation email failed: invalid header for user %s', user.email)
+        raise
     except Exception as e:
         logger.error('Activation email failed for user %s: %s', user.email, str(e))
+        raise
 
 
 def activate_user(uidb64, token):
@@ -75,7 +77,7 @@ def send_password_reset_email(email, request):
         'user': user,
         'reset_url': reset_url,
     })
-    from_email = settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER
+    from_email = settings.DEFAULT_FROM_EMAIL
     try:
         msg = EmailMultiAlternatives(
             subject='Reset your Videoflix password',

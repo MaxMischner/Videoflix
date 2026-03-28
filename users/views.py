@@ -28,12 +28,16 @@ class RegisterView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         user = serializer.save()
+        email_error = None
         try:
             send_activation_email(user, request)
-        except Exception:
-            pass
+        except Exception as e:
+            email_error = str(e)
         token = str(RefreshToken.for_user(user).access_token)
-        return Response({'user': UserSerializer(user).data, 'token': token}, status=status.HTTP_201_CREATED)
+        data = {'user': UserSerializer(user).data, 'token': token}
+        if email_error:
+            data['email_error'] = email_error
+        return Response(data, status=status.HTTP_201_CREATED)
 
 
 class ActivateAccountView(APIView):
